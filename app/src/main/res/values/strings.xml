@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">GpsDriver</string>
+
+     
+    <string name="prompt_email"> Email </string>
+        
+    <string name="prompt_password"> Password </string>
+    <string name="action_sign_in_short"> sign in </string>
+    <string name="search">Search</string>
+    <string name="no_result">No Result Found</string>
+</resources>
