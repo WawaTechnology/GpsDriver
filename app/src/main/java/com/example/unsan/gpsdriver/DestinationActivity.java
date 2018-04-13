@@ -1,14 +1,20 @@
 package com.example.unsan.gpsdriver;
 
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,7 +28,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
+
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -35,6 +41,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.google.gson.Gson;
@@ -42,6 +50,7 @@ import com.google.gson.Gson;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -60,6 +69,8 @@ public class DestinationActivity extends AppCompatActivity {
     CustomerNode customerN;
     FirebaseStorage firebaseStorage;
     FirebaseDatabase fbd;
+    ProgressDialog progressDialog;
+
 
 
     DatabaseReference destinationReference;
@@ -68,6 +79,7 @@ public class DestinationActivity extends AppCompatActivity {
     String carNumber;
 
     String startAddress;
+    NetworkInfo networkInfo;
 
 
 
@@ -85,10 +97,28 @@ public class DestinationActivity extends AppCompatActivity {
     String startTime;
     Uri downloadUrl;
     String node;
-    ProgressBar pgbar;
+
     private String gpsDestAddress;
     File photoFile;
     FusedLocationProviderClient mFusedLocationProviderClient;
+   private BroadcastReceiver br=new BroadcastReceiver()
+    {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION))
+            {
+               ConnectivityManager connectivityManager= (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+               networkInfo=connectivityManager.getActiveNetworkInfo();
+               if(networkInfo==null)
+               {
+                   Toast.makeText(DestinationActivity.this,"No Connectivity",Toast.LENGTH_LONG).show();
+               }
+
+            }
+        }
+    };
+
 
 
     @Override
@@ -104,21 +134,25 @@ public class DestinationActivity extends AppCompatActivity {
 
 
 
+
         takeButton = (ImageButton) findViewById(R.id.imgbut);
 
         submit = (Button) findViewById(R.id.submit);
         imgview = (ImageView) findViewById(R.id.imgv);
-        pgbar=(ProgressBar) findViewById(R.id.pgbar);
+
         firebaseStorage = FirebaseStorage.getInstance();
         storageReference = firebaseStorage.getReference().child("destination_photo");
         fbd=FirebaseDatabase.getInstance();
 
 
         destinationReference=fbd.getReference("deliveryDriver");
+        IntentFilter intentFilter=new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+
+        registerReceiver(br,intentFilter);
 
         // globalProvider=GlobalProvider.getGlobalInstance(DestinationActivity.this);
 
-        pgbar.setVisibility(View.INVISIBLE);
         Intent intent=getIntent();
         customerN= (CustomerNode) intent.getSerializableExtra("customerds");
         carNumber=intent.getStringExtra("carNum");
@@ -133,7 +167,7 @@ public class DestinationActivity extends AppCompatActivity {
             return;
         }
 
-   mFusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this);
+        mFusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this);
         mFusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
@@ -181,37 +215,40 @@ public class DestinationActivity extends AppCompatActivity {
         takeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                pgbar.setVisibility(View.VISIBLE);
-                Toast.makeText(DestinationActivity.this,"Please wait! Photo is uploading to the server",Toast.LENGTH_LONG).show();
+                if (networkInfo == null) {
+                    Toast.makeText(DestinationActivity.this, "Action cannot be perfomed,Please turn on Internet ", Toast.LENGTH_LONG).show();
+                } else {
 
-                //  capturedImageUri= FileProvider.getUriForFile(DestinationActivity.this, getApplicationContext().getPackageName() + ".com.example.unsan.gpstracker.GenericFileProvider", file);
-                //capturedImageUri = Uri.fromFile(file);
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-                // intent.setType("image/jpeg");
-                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                    // Create the File where the photo should go
-                    photoFile = null;
-                    try {
-                        photoFile = createImageFile();
-                    } catch (IOException ex) {
-                        // Error occurred while creating the File
+                    //  capturedImageUri= FileProvider.getUriForFile(DestinationActivity.this, getApplicationContext().getPackageName() + ".com.example.unsan.gpstracker.GenericFileProvider", file);
+                    //capturedImageUri = Uri.fromFile(file);
+                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-                    }
-                    // Continue only if the File was successfully created
-                    if (photoFile != null) {
-                        Uri uri = FileProvider.getUriForFile(DestinationActivity.this, BuildConfig.APPLICATION_ID + ".provider",photoFile);
-                        // Uri uri = Uri.fromFile(new File(path));
+                    // intent.setType("image/jpeg");
+                    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                        // Create the File where the photo should go
+                        photoFile = null;
+                        try {
+                            photoFile = createImageFile();
+                        } catch (IOException ex) {
+                            // Error occurred while creating the File
+
+                        }
+                        // Continue only if the File was successfully created
+                        if (photoFile != null) {
+                            Uri uri = FileProvider.getUriForFile(DestinationActivity.this, BuildConfig.APPLICATION_ID + ".provider", photoFile);
+                            // Uri uri = Uri.fromFile(new File(path));
 
 
                         /*Uri photoURI = FileProvider.getUriForFile(DestinationActivity.this,
                                 "com.example.unsan.gpstracker.GenericFileProvider",
                                 photoFile);
                                 */
-                        capturedImageUri=Uri.fromFile(photoFile);
-                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-                        takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                        startActivityForResult(takePictureIntent, RC_PHOTO_PICKER);
+                            capturedImageUri = Uri.fromFile(photoFile);
+                            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+                            takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                            startActivityForResult(takePictureIntent, RC_PHOTO_PICKER);
+                        }
                     }
                 }
             }
@@ -233,7 +270,7 @@ public class DestinationActivity extends AppCompatActivity {
                     String desttime = sd.format(date);
                     long tm=-1 * new Date().getTime();
 
-                   // Delivery delivery = new Delivery(tm,startTime, desttime, dateString, downloadUrl.toString(), customerN.getRestaurantName(), customer.Address, startAddress, carNumber, "name1", gpsDestAddress);
+                    // Delivery delivery = new Delivery(tm,startTime, desttime, dateString, downloadUrl.toString(), customerN.getRestaurantName(), customer.Address, startAddress, carNumber, "name1", gpsDestAddress);
                     DeliveryDriver deliveryDriver=new DeliveryDriver(desttime,dateString,downloadUrl.toString(),tm,customerN.getRestaurantName(),customer.Address,gpsDestAddress,carNumber);
                     String node=destinationReference.push().getKey();
                     destinationReference.child(node).setValue(deliveryDriver);
@@ -286,6 +323,12 @@ public class DestinationActivity extends AppCompatActivity {
         if (requestcode == RC_PHOTO_PICKER && resultcode == RESULT_OK) {
 
             //  final Uri SelectedImageUri = data.getData();
+            progressDialog = new ProgressDialog(DestinationActivity.this);
+            progressDialog.setMax(100);
+            progressDialog.setMessage("Uploading...");
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.show();
+            progressDialog.setCancelable(false);
             Uri uri = capturedImageUri;
             Log.d("uripic",capturedImageUri.getLastPathSegment());
             Bitmap myImg = BitmapFactory.decodeFile(uri.getPath());
@@ -302,8 +345,6 @@ public class DestinationActivity extends AppCompatActivity {
 
 /*            Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
-
-
             imgview.setImageBitmap(imageBitmap);
             */
 
@@ -311,32 +352,44 @@ public class DestinationActivity extends AppCompatActivity {
             StorageReference photoref = storageReference.child(capturedImageUri.getLastPathSegment());
 
             UploadTask uploadTask = photoref.putBytes(b);
-            uploadTask.addOnFailureListener(new OnFailureListener() {
+            uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                   long l= taskSnapshot.getTotalByteCount();
+
+                   Log.d("checkimg",l+"");
+                    double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                    //sets and increments value of progressbar
+                    progressDialog.incrementProgressBy((int) progress);
+                }
+            }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception exception) {
+                    Log.d("imageexception", exception.getMessage());
+                    Toast.makeText(DestinationActivity.this,"Error in uploading!",Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
                     // Handle unsuccessful uploads
                 }
             }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                    progressDialog.dismiss();
+                    Toast.makeText(DestinationActivity.this,"Upload Successful!",Toast.LENGTH_SHORT).show();
                     downloadUrl = taskSnapshot.getDownloadUrl();
-                    Log.d("checkurld",downloadUrl.toString());
-                    pgbar.setVisibility(View.GONE);
-                    Toast.makeText(DestinationActivity.this,"Photo Uploaded successful!",Toast.LENGTH_SHORT).show();
+                    Log.d("checkurld", downloadUrl.toString());
+
+
                 }
             });
 
             /*
             photoref.putFile(capturedImageUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
-
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                      downloadUrl = taskSnapshot.getDownloadUrl();
                      Log.d("checkurld",downloadUrl.toString());
                      pgbar.setVisibility(View.GONE);
-
-
                 }
             });
             */
@@ -345,6 +398,12 @@ public class DestinationActivity extends AppCompatActivity {
             // encodeBitmapAndSaveToFirebase(imageBitmap);
 
         }
+    }
+    public void onDestroy()
+    {
+        super.onDestroy();
+        if(br!=null)
+        unregisterReceiver(br);
     }
 
     private File createImageFile() throws IOException {
@@ -363,20 +422,6 @@ public class DestinationActivity extends AppCompatActivity {
         return image;
     }
 
-   /* public void encodeBitmapAndSaveToFirebase(Bitmap bitmap) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        String imageEncoded = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-       // Uri selectedImageUri = Uri.parse(imageEncoded);
-        StorageReference photoref = storageReference.child(imageEncoded);
-        photoref.putFile(imageEncoded).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
 
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Uri downloadUrl = taskSnapshot.getDownloadUrl();
 
-            }
-        });
-    }
-    */
 }

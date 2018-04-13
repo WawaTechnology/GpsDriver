@@ -8,8 +8,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -18,17 +20,20 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Unsan on 12/4/18.
  */
 
-public class MainPage extends AppCompatActivity {
+public class MainPage extends AppCompatActivity implements View.OnClickListener {
 
     ListView listView,alphaViewList;
     DatabaseReference customerReference;
     public static boolean sorted;
+    Map<String, Integer> mapIndex;
 
 
 
@@ -46,10 +51,13 @@ public class MainPage extends AppCompatActivity {
         pgbar=(ProgressBar) findViewById(R.id.pgbar);
 
         FirebaseDatabase fbd=FirebaseDatabase.getInstance();
+        //fbd.setPersistenceEnabled(true);
+
 
         customerList=new ArrayList<>();
         listView=(ListView) findViewById(R.id.list_view);
         customerReference=fbd.getReference("Customer");
+
 
 
         customAdapter=new CustomAdapter(MainPage.this,R.layout.simple_display,customerList);
@@ -155,6 +163,9 @@ public class MainPage extends AppCompatActivity {
                     customerList.add(customerNode);
                     customAdapter.notifyDataSetChanged();
                 }
+                getIndexList(customerList);
+
+                displayIndex();
             }
 
             @Override
@@ -165,5 +176,38 @@ public class MainPage extends AppCompatActivity {
         });
 
 
+    }
+
+    private void getIndexList(List<CustomerNode> customerList) {
+        mapIndex = new LinkedHashMap<String, Integer>();
+        for (int i = 0; i < customerList.size(); i++) {
+            CustomerNode cn=customerList.get(i);
+            String restName=cn.restaurantName;
+
+            String index = restName.substring(0, 1);
+
+            if (mapIndex.get(index) == null)
+                mapIndex.put(index, i);
+        }
+
+    }
+    private void displayIndex() {
+        LinearLayout indexLayout = (LinearLayout) findViewById(R.id.side_index);
+
+        TextView textView;
+        List<String> indexList = new ArrayList<String>(mapIndex.keySet());
+        for (String index : indexList) {
+            textView = (TextView) getLayoutInflater().inflate(
+                    R.layout.side_index_item, null);
+            textView.setText(index);
+            textView.setOnClickListener(this);
+            indexLayout.addView(textView);
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        TextView selectedIndex = (TextView) view;
+        listView.setSelection(mapIndex.get(selectedIndex.getText()));
     }
 }
