@@ -20,5 +20,10 @@
         android:title="Sort By Restaurant"
         android:text="Sort by Restaurant"
         app:showAsAction="never"></item>
+    <item
+        android:id="@+id/logout"
+        android:title="logout"
+        android:text="logout"
+        app:showAsAction="never"></item>
 
 </menu>

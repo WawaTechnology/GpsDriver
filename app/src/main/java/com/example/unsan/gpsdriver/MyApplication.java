@@ -28,7 +28,7 @@ public class MyApplication extends Application {
         ma =this;
         fbd=FirebaseDatabase.getInstance();
         fbd.setPersistenceEnabled(true);
-        registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+       registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
 
             @Override
             public void onActivityCreated(Activity activity,
@@ -71,6 +71,8 @@ public class MyApplication extends Application {
             }
 
 
+
         });
+
     }
 }

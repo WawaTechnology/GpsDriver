@@ -1,6 +1,8 @@
 package com.example.unsan.gpsdriver;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -13,6 +15,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,15 +34,17 @@ import java.util.Map;
 public class MainPage extends AppCompatActivity implements View.OnClickListener {
 
     ListView listView,alphaViewList;
-    DatabaseReference customerReference;
+    DatabaseReference customerReference,driverDataRef;
     public static boolean sorted;
     Map<String, Integer> mapIndex;
+    String email;
 
 
 
     List<CustomerNode> customerList;
     CustomAdapter customAdapter;
     ProgressBar pgbar;
+    SharedPreferences sharedPreferences;
 
 
 
@@ -51,6 +56,11 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         pgbar=(ProgressBar) findViewById(R.id.pgbar);
 
         FirebaseDatabase fbd=FirebaseDatabase.getInstance();
+        driverDataRef=fbd.getReference("Driver");
+      sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+      email=sharedPreferences.getString("email",null);
+
+
         //fbd.setPersistenceEnabled(true);
 
 
@@ -64,10 +74,41 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         listView.setAdapter(customAdapter);
         customAdapter.notifyDataSetChanged();
         pgbar.setVisibility(View.VISIBLE);
+
         getCustomerData();
+        getDriverDetail();
 
 
 
+    }
+
+    private void getDriverDetail() {
+        driverDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot ds:dataSnapshot.getChildren())
+                {
+                 Driver driver= ds.getValue(Driver.class);
+                String emaild= driver.getEmail();
+                if(emaild.equals(email))
+                {
+                   long phone= driver.getPhone();
+                  String name= ds.getKey();
+                  Log.d("getvalues",phone +" "+name);
+                  SharedPreferences.Editor editor=sharedPreferences.edit();
+                  editor.putString("dname",name);
+                  editor.putLong("phone",phone);
+                  editor.commit();
+
+                }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
@@ -97,6 +138,20 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
             {
                 getCustomerData();
                 break;
+            }
+           case  R.id.logout:
+            {
+
+                SharedPreferences.Editor editor=sharedPreferences.edit();
+                editor.putBoolean("isLogin",false);
+                editor.putString("dname",null);
+                editor.putLong("phone",0);
+                editor.putString("email",null);
+
+                editor.commit();
+            Intent intent=new Intent(MainPage.this,MainActivity.class);
+            startActivity(intent);
+
             }
 
 

@@ -97,6 +97,8 @@ public class DestinationActivity extends AppCompatActivity {
     String startTime;
     Uri downloadUrl;
     String node;
+    String driverName;
+    SharedPreferences sharedPreferences;
 
     private String gpsDestAddress;
     File photoFile;
@@ -142,6 +144,8 @@ public class DestinationActivity extends AppCompatActivity {
 
         firebaseStorage = FirebaseStorage.getInstance();
         storageReference = firebaseStorage.getReference().child("destination_photo");
+        sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+        driverName=sharedPreferences.getString("dname",null);
         fbd=FirebaseDatabase.getInstance();
 
 
@@ -271,7 +275,7 @@ public class DestinationActivity extends AppCompatActivity {
                     long tm=-1 * new Date().getTime();
 
                     // Delivery delivery = new Delivery(tm,startTime, desttime, dateString, downloadUrl.toString(), customerN.getRestaurantName(), customer.Address, startAddress, carNumber, "name1", gpsDestAddress);
-                    DeliveryDriver deliveryDriver=new DeliveryDriver(desttime,dateString,downloadUrl.toString(),tm,customerN.getRestaurantName(),customer.Address,gpsDestAddress,carNumber);
+                    DeliveryDriver deliveryDriver=new DeliveryDriver(desttime,dateString,downloadUrl.toString(),tm,customerN.getRestaurantName(),customer.Address,gpsDestAddress,carNumber,driverName);
                     String node=destinationReference.push().getKey();
                     destinationReference.child(node).setValue(deliveryDriver);
 
