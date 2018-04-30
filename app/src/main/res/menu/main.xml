@@ -3,6 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
 
+<item
+    android:id="@+id/name"
+    android:title="Name"
+
+    app:showAsAction="always"/>
+    <item
+        android:id="@+id/carNumber"
+        android:title="car Number"
+        app:showAsAction="always"/>
     <item
         android:id="@+id/searchid"
         android:title="@string/search"
@@ -21,9 +30,14 @@
         android:text="Sort by Restaurant"
         app:showAsAction="never"></item>
     <item
+        android:id="@+id/show_deliveries"
+        android:title="Show Deliveries"
+        app:showAsAction="never"></item>
+    <item
         android:id="@+id/logout"
         android:title="logout"
         android:text="logout"
         app:showAsAction="never"></item>
+
 
 </menu>

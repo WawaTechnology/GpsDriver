@@ -3,7 +3,11 @@ package com.example.unsan.gpsdriver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -14,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -27,6 +32,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static android.view.View.GONE;
+
 /**
  * Created by Unsan on 12/4/18.
  */
@@ -38,13 +45,16 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     public static boolean sorted;
     Map<String, Integer> mapIndex;
     String email;
-
+ValueEventListener valueEventListener,dvEventListner;
 
 
     List<CustomerNode> customerList;
     CustomAdapter customAdapter;
     ProgressBar pgbar;
     SharedPreferences sharedPreferences;
+    ActionBar actionBar;
+    String driverName,carNumber;
+
 
 
 
@@ -53,12 +63,18 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_page);
+        Log.d("tag","oncreate");
         pgbar=(ProgressBar) findViewById(R.id.pgbar);
 
         FirebaseDatabase fbd=FirebaseDatabase.getInstance();
         driverDataRef=fbd.getReference("Driver");
-      sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
-      email=sharedPreferences.getString("email",null);
+
+
+
+      actionBar=getSupportActionBar();
+      actionBar.setDisplayShowTitleEnabled(false);
+
+
 
 
         //fbd.setPersistenceEnabled(true);
@@ -67,6 +83,7 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         customerList=new ArrayList<>();
         listView=(ListView) findViewById(R.id.list_view);
         customerReference=fbd.getReference("Customer");
+        customerReference.keepSynced(true);
 
 
 
@@ -75,15 +92,23 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         customAdapter.notifyDataSetChanged();
         pgbar.setVisibility(View.VISIBLE);
 
-        getCustomerData();
-        getDriverDetail();
+
 
 
 
     }
+    public void onStart()
+    {
+        super.onStart();
+
+
+        getCustomerData();
+       // getDriverDetail();
+    }
+
 
     private void getDriverDetail() {
-        driverDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+       dvEventListner= driverDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot ds:dataSnapshot.getChildren())
@@ -114,7 +139,30 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main,menu);
+      /*  TextView tv = new TextView(this);
+        String text="car 5";
+        tv.setText(text);
+        tv.setTextColor(getResources().getColor(R.color.WHITE));
+        tv.setOnClickListener(this);
+        tv.setPadding(5, 0, 55, 0);
+        tv.setTypeface(null, Typeface.BOLD);
+        tv.setTextSize(14);
+        menu.add(0, 0, 1, text).setActionView(tv).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        */
         return super.onCreateOptionsMenu(menu);
+    }
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+       //get from source
+
+        sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+        email=sharedPreferences.getString("email",null);
+        driverName=sharedPreferences.getString("dname",null);
+        carNumber=sharedPreferences.getString("carNumber",null);
+        menu.findItem(R.id.name).setTitle(driverName);
+        menu.findItem(R.id.carNumber).setTitle("car Number: "+carNumber);
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -139,14 +187,24 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
                 getCustomerData();
                 break;
             }
+            case R.id.show_deliveries:
+            {
+                Intent intent=new Intent(MainPage.this,ShowImagesActivity.class);
+                startActivity(intent);
+                break;
+            }
            case  R.id.logout:
             {
 
                 SharedPreferences.Editor editor=sharedPreferences.edit();
                 editor.putBoolean("isLogin",false);
                 editor.putString("dname",null);
-                editor.putLong("phone",0);
+
                 editor.putString("email",null);
+
+
+                editor.putString("carNumber",null);
+                editor.putString("carInfo",null);
 
                 editor.commit();
             Intent intent=new Intent(MainPage.this,MainActivity.class);
@@ -158,30 +216,36 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         }
         return super.onOptionsItemSelected(item);
     }
-    public void onBackPressed()
-    {
-        super.onBackPressed();
 
-    }
 
     private void getCustomerAddress() {
         Log.d("chksee","we are here");
         sorted =true;
-        customerList.clear();
-        customerReference.orderByChild("Address").addListenerForSingleValueEvent(new ValueEventListener() {
+
+        customerReference.orderByChild("address").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                customerList.clear();
+                if(dataSnapshot.hasChildren()) {
+
+                    pgbar.setVisibility(View.INVISIBLE);
+                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                        String key = ds.getKey();
+                        Log.d("checkkey", key);
+                        Customer c = ds.getValue(Customer.class);
+                        CustomerNode customerNode = new CustomerNode(key, c);
+                        customerList.add(customerNode);
 
 
-                for(DataSnapshot ds:dataSnapshot.getChildren())
-                {
-                    String key=ds.getKey();
-                    Log.d("checkkey",key);
-                    Customer c=ds.getValue(Customer.class);
-                    CustomerNode customerNode=new CustomerNode(key,c);
-                    customerList.add(customerNode);
-                    pgbar.setVisibility(View.GONE);
+
+                    }
                     customAdapter.notifyDataSetChanged();
+
+                }
+                else {
+                    pgbar.setVisibility(GONE);
+                    Toast.makeText(MainPage.this, "No record found", Toast.LENGTH_LONG)
+                            .show();
                 }
             }
 
@@ -197,30 +261,40 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     public void onResume()
     {
         super.onResume();
+        Log.d("tag","onresume");
 
     }
 
     private void getCustomerData() {
         Log.d("chksee","we are here");
         sorted=false;
-        customerList.clear();
-        customerReference.addListenerForSingleValueEvent(new ValueEventListener() {
+
+       valueEventListener= customerReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Log.d("checkk","here");
+                customerList.clear();
+                if(dataSnapshot.hasChildren()) {
 
-                for(DataSnapshot ds:dataSnapshot.getChildren())
-                {
-                    String key=ds.getKey();
-                    Log.d("checkkey",key);
-                    Customer c=ds.getValue(Customer.class);
-                    CustomerNode customerNode=new CustomerNode(key,c);
-                    customerList.add(customerNode);
-                    customAdapter.notifyDataSetChanged();
+
+                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                        String key = ds.getKey();
+                        Log.d("checkkey", key);
+                        Customer c = ds.getValue(Customer.class);
+                        CustomerNode customerNode = new CustomerNode(key, c);
+                        customerList.add(customerNode);
+                        customAdapter.notifyDataSetChanged();
+                    }
+                    pgbar.setVisibility(GONE);
+                    getIndexList(customerList);
+
+                    displayIndex();
                 }
-                getIndexList(customerList);
-
-                displayIndex();
+                else
+                {
+                    Toast.makeText(MainPage.this,"No records found!",Toast.LENGTH_LONG).show();
+                    pgbar.setVisibility(GONE);
+                }
             }
 
             @Override
@@ -259,10 +333,44 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
             indexLayout.addView(textView);
         }
     }
+    public void onPause()
+    {
+        super.onPause();
+        Log.d("tag","pasue");
+    }
+    public void onStop()
+    {
+        super.onStop();
+        Log.d("tag","stop");
+        if(valueEventListener!=null)
+            Log.d("destroy called","removing listener");
+        customerReference.removeEventListener(valueEventListener);
+        if(dvEventListner!=null)
+            driverDataRef.removeEventListener(dvEventListner);
+
+
+    }
+    @Override
+    public void onBackPressed() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            finishAffinity();
+        }
+    }
+
+    public void onRestart()
+    {
+        super.onRestart();
+        Log.d("tag","restart");
+    }
 
     @Override
     public void onClick(View view) {
         TextView selectedIndex = (TextView) view;
         listView.setSelection(mapIndex.get(selectedIndex.getText()));
+    }
+    public void onDestroy()
+    {
+        super.onDestroy();
+
     }
 }

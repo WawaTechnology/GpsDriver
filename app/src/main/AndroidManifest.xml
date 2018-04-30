@@ -24,6 +24,9 @@
         android:name=".MyApplication"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:largeHeap="true"
+        android:hardwareAccelerated="false"
+
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity"
             android:noHistory="true">
@@ -33,6 +36,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ShowImagesActivity"
+            android:parentActivityName=".MainPage"></activity>
+        <activity android:name=".DeliveredActivity"
+            android:parentActivityName=".MainPage"></activity>
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -42,9 +49,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths"/>
         </provider>
-        <activity android:name=".DestinationActivity"></activity>
+
         <activity android:name=".MainPage"></activity>
-        <activity android:name=".SearchResultsActivity"></activity>
+        <activity android:name=".SearchResultsActivity"
+            android:parentActivityName=".MainPage"></activity>
         <activity android:name=".CustomerDetail"></activity>
 
 

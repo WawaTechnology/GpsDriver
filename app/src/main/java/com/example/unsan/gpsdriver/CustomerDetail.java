@@ -44,15 +44,15 @@ import java.util.Locale;
  * Created by Unsan on 12/4/18.
  */
 
-public class CustomerDetail extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemSelectedListener {
+public class CustomerDetail extends AppCompatActivity  {
 
     TextView name, phone, address, restName, zipText;
     final int REQUEST_CHECK_SETTINGS = 125;
     Button reached;
     Customer c;
     String timestart, date;
-    Spinner spinner;
-    ArrayAdapter<String> arrayAdapter;
+
+
     String carNumber;
 
 
@@ -82,7 +82,7 @@ public class CustomerDetail extends AppCompatActivity implements GoogleApiClient
 
         carList=new ArrayList<>();
 
-        spinner=(Spinner) findViewById(R.id.sp1);
+
         restName=(TextView) findViewById(R.id.rest_name);
         zipText=(TextView) findViewById(R.id.zip);
 
@@ -116,10 +116,9 @@ public class CustomerDetail extends AppCompatActivity implements GoogleApiClient
 
 
 
-        arrayAdapter=new ArrayAdapter<String>(CustomerDetail.this,R.layout.support_simple_spinner_dropdown_item,carList);
 
-        spinner.setAdapter(arrayAdapter);
-        spinner.setOnItemSelectedListener(CustomerDetail.this);
+
+
 
 
 
@@ -127,7 +126,8 @@ public class CustomerDetail extends AppCompatActivity implements GoogleApiClient
             @Override
             public void onClick(View view) {
                 finish();
-                Intent intent = new Intent(CustomerDetail.this, DestinationActivity.class);
+               // Intent intent = new Intent(CustomerDetail.this, DestinationActivity.class);
+                Intent intent = new Intent(CustomerDetail.this, DeliveredActivity.class);
                 intent.putExtra("customerds", cn);
                 intent.putExtra("carNum",carNumber);
 
@@ -142,20 +142,6 @@ public class CustomerDetail extends AppCompatActivity implements GoogleApiClient
 
 
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
 
 
 
@@ -180,15 +166,7 @@ public class CustomerDetail extends AppCompatActivity implements GoogleApiClient
         super.onBackPressed();
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        carNumber=adapterView.getItemAtPosition(i).toString();
-    }
 
-    @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
-    }
 
 
 

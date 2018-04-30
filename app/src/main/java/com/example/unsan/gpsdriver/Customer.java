@@ -8,73 +8,68 @@ import java.io.Serializable;
 
 public class Customer implements Serializable {
 
-    String ContactPerson;
+    String contactPerson;
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
     public Object getZip() {
-        return Zip;
-    }
-
-    public String getContactPerson() {
-        return ContactPerson;
-    }
-
-    public void setContactPerson(String contactPerson) {
-        ContactPerson = contactPerson;
+        return zip;
     }
 
     public void setZip(Object zip) {
-        Zip = zip;
+        this.zip = zip;
+    }
+
+    public String getContactPerson() {
+        return contactPerson;
+    }
+
+    public void setContactPerson(String contactPerson) {
+        this.contactPerson = contactPerson;
     }
 
     public long getContactNumber() {
-        return ContactNumber;
+        return contactNumber;
     }
 
     public void setContactNumber(long contactNumber) {
-        ContactNumber = contactNumber;
+        this.contactNumber = contactNumber;
     }
 
-
-
-    public String getCity() {
-        return City;
-    }
-
-    public void setCity(String City) {
-        this.City = City;
-    }
-
-    Object Zip;
-    String City;
+    Object zip;
+    String city;
     public Customer()
     {
 
     }
 
-
-    public String getAddress() {
-        return Address;
+    public String getCity() {
+        return city;
     }
 
-    public void setAddress(String Address) {
-        this.Address = Address;
+    public void setCity(String city) {
+        this.city = city;
     }
 
-
-
-    String Address;
-    long ContactNumber;
+    String address;
+    long contactNumber;
 
 
 
 
     public Customer(String Address,String City,long ContactNumber,String ContactPerson,Object Zip)
     {
-        this.Address=Address;
-        this.City=City;
-        this.ContactNumber=ContactNumber;
-        this.ContactPerson=ContactPerson;
-        this.Zip=Zip;
+        this.address=Address;
+        this.city=City;
+        this.contactNumber=ContactNumber;
+        this.contactPerson=ContactPerson;
+        this.zip=Zip;
 
     }
 

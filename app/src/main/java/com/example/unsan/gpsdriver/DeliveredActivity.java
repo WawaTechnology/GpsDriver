@@ -4,10 +4,10 @@ import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Address;
@@ -21,46 +21,44 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NavUtils;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static android.view.View.GONE;
+
 /**
- * Created by Unsan on 12/4/18.
+ * Created by Unsan on 25/4/18.
  */
 
-public class DestinationActivity extends AppCompatActivity {
+public class DeliveredActivity extends AppCompatActivity {
     ImageButton takeButton;
     Button submit;
     int RC_PHOTO_PICKER = 123;
@@ -70,19 +68,19 @@ public class DestinationActivity extends AppCompatActivity {
     FirebaseStorage firebaseStorage;
     FirebaseDatabase fbd;
     ProgressDialog progressDialog;
+    TextView name, phone, addressTextView, restName, zipText;
 
+    private CustomerSqlite customerSqlite;
 
 
     DatabaseReference destinationReference;
 
-    String strLat,strLng;
+    String strLat, strLng;
     String carNumber;
 
     String startAddress;
     NetworkInfo networkInfo;
-
-
-
+    DatabaseReference driverDayDelivery;
 
 
     private StorageReference storageReference;
@@ -91,75 +89,91 @@ public class DestinationActivity extends AppCompatActivity {
 
     String dateString;
 
-    double longitude,latitude;
+    double longitude, latitude;
     String address;
-    double lat,lng;
+    double lat, lng;
     String startTime;
     Uri downloadUrl;
     String node;
     String driverName;
+
     SharedPreferences sharedPreferences;
 
     private String gpsDestAddress;
     File photoFile;
     FusedLocationProviderClient mFusedLocationProviderClient;
-   private BroadcastReceiver br=new BroadcastReceiver()
-    {
+    private BroadcastReceiver br = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION))
-            {
-               ConnectivityManager connectivityManager= (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-               networkInfo=connectivityManager.getActiveNetworkInfo();
-               if(networkInfo==null)
-               {
-                   Toast.makeText(DestinationActivity.this,"No Connectivity",Toast.LENGTH_LONG).show();
-               }
+            if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                networkInfo = connectivityManager.getActiveNetworkInfo();
+                if (networkInfo == null) {
+                    Toast.makeText(DeliveredActivity.this, "No Connectivity", Toast.LENGTH_LONG).show();
+                }
 
             }
         }
     };
 
 
-
     @Override
     public void onBackPressed() {
-        Intent intent=new Intent(DestinationActivity.this,MainPage.class);
+        Intent intent = new Intent(DeliveredActivity.this, MainPage.class);
         startActivity(intent);
     }
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.destination_layout);
-
-
-
+        customerSqlite = new CustomerSqlite(this);
 
 
         takeButton = (ImageButton) findViewById(R.id.imgbut);
 
+
         submit = (Button) findViewById(R.id.submit);
         imgview = (ImageView) findViewById(R.id.imgv);
+        restName = (TextView) findViewById(R.id.rest_name);
+        zipText = (TextView) findViewById(R.id.zip);
+
+
+        name = (TextView) findViewById(R.id.name);
+        phone = (TextView) findViewById(R.id.phone);
+        addressTextView = (TextView) findViewById(R.id.address);
 
         firebaseStorage = FirebaseStorage.getInstance();
         storageReference = firebaseStorage.getReference().child("destination_photo");
-        sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
-        driverName=sharedPreferences.getString("dname",null);
-        fbd=FirebaseDatabase.getInstance();
+        sharedPreferences = getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+        driverName = sharedPreferences.getString("dname", null);
+        carNumber = sharedPreferences.getString("carNumber", null);
+
+        fbd = FirebaseDatabase.getInstance();
 
 
-        destinationReference=fbd.getReference("deliveryDriver");
-        IntentFilter intentFilter=new IntentFilter();
+        destinationReference = fbd.getReference("DriverDelivery");
+        driverDayDelivery=fbd.getReference("driverDayRecord");
+
+        IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 
-        registerReceiver(br,intentFilter);
+        registerReceiver(br, intentFilter);
 
-        // globalProvider=GlobalProvider.getGlobalInstance(DestinationActivity.this);
+        // globalProvider=GlobalProvider.getGlobalInstance(DeliveredActivity.this);
 
-        Intent intent=getIntent();
-        customerN= (CustomerNode) intent.getSerializableExtra("customerds");
-        carNumber=intent.getStringExtra("carNum");
+
+        Intent intent = getIntent();
+        customerN = (CustomerNode) intent.getSerializableExtra("customernd");
+        customer = customerN.getCustomer();
+        name.setText(customer.getContactPerson());
+        phone.setText(customer.getContactNumber() + "");
+        addressTextView.setText(customer.getAddress());
+
+        restName.setText(customerN.getRestaurantName());
+        zipText.setText(customer.getZip() + "");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -171,34 +185,27 @@ public class DestinationActivity extends AppCompatActivity {
             return;
         }
 
-        mFusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this);
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        //TODO implement this functionality on Button's click
+
         mFusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
-                latitude=location.getLatitude();
-                longitude=location.getLongitude();
+                Log.d("loclistener", "called");
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
                 convertAddress();
-
-
 
 
             }
         });
 
 
-
-
-
-
-
-
-
         // customer=globalProvider.getCustomer();
         // startAddress=globalProvider.getStartingAddress();
         //  node=globalProvider.getNode();
 
-        customer=customerN.getCustomer();
-
+        customer = customerN.getCustomer();
 
 
         // customer= sharedPreferences.getString("Customer",null);
@@ -207,24 +214,21 @@ public class DestinationActivity extends AppCompatActivity {
         // String car=customer.carNumber.trim();
 
 
-
         strLat = String.valueOf(lat);
         Log.v("lat:", strLat);
         strLng = String.valueOf(lng);
         Log.v("lng:", strLng);
 
 
-
-
         takeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (networkInfo == null) {
-                    Toast.makeText(DestinationActivity.this, "Action cannot be perfomed,Please turn on Internet ", Toast.LENGTH_LONG).show();
+                    Toast.makeText(DeliveredActivity.this, "Action cannot be perfomed,Please turn on Internet ", Toast.LENGTH_LONG).show();
                 } else {
 
 
-                    //  capturedImageUri= FileProvider.getUriForFile(DestinationActivity.this, getApplicationContext().getPackageName() + ".com.example.unsan.gpstracker.GenericFileProvider", file);
+                    //  capturedImageUri= FileProvider.getUriForFile(DeliveredActivity.this, getApplicationContext().getPackageName() + ".com.example.unsan.gpstracker.GenericFileProvider", file);
                     //capturedImageUri = Uri.fromFile(file);
                     Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
@@ -240,11 +244,11 @@ public class DestinationActivity extends AppCompatActivity {
                         }
                         // Continue only if the File was successfully created
                         if (photoFile != null) {
-                            Uri uri = FileProvider.getUriForFile(DestinationActivity.this, BuildConfig.APPLICATION_ID + ".provider", photoFile);
+                            Uri uri = FileProvider.getUriForFile(DeliveredActivity.this, BuildConfig.APPLICATION_ID + ".provider", photoFile);
                             // Uri uri = Uri.fromFile(new File(path));
 
 
-                        /*Uri photoURI = FileProvider.getUriForFile(DestinationActivity.this,
+                        /*Uri photoURI = FileProvider.getUriForFile(DeliveredActivity.this,
                                 "com.example.unsan.gpstracker.GenericFileProvider",
                                 photoFile);
                                 */
@@ -260,11 +264,13 @@ public class DestinationActivity extends AppCompatActivity {
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(downloadUrl==null)
+
+                if(capturedImageUri==null)
                 {
-                    Toast.makeText(DestinationActivity.this,"Please upload photo first",Toast.LENGTH_LONG).show();
+                    Toast.makeText(DeliveredActivity.this,"Please take an image first!",Toast.LENGTH_LONG).show();
                 }
                 else {
+
 
                     long date = System.currentTimeMillis();
                     SimpleDateFormat sd = new SimpleDateFormat("HH:mm");
@@ -272,34 +278,43 @@ public class DestinationActivity extends AppCompatActivity {
                     dateString = sdf.format(date);
 
                     String desttime = sd.format(date);
-                    long tm=-1 * new Date().getTime();
+                    long tm = -1 * new Date().getTime();
 
                     // Delivery delivery = new Delivery(tm,startTime, desttime, dateString, downloadUrl.toString(), customerN.getRestaurantName(), customer.Address, startAddress, carNumber, "name1", gpsDestAddress);
-                    DeliveryDriver deliveryDriver=new DeliveryDriver(desttime,dateString,downloadUrl.toString(),tm,customerN.getRestaurantName(),customer.Address,gpsDestAddress,carNumber,driverName);
-                    String node=destinationReference.push().getKey();
+                    DriverDelivery deliveryDriver = new DriverDelivery(desttime, dateString, tm, customerN.getRestaurantName(), customer.address, gpsDestAddress, carNumber, driverName);
+                    node = destinationReference.push().getKey();
                     destinationReference.child(node).setValue(deliveryDriver);
+                    customerSqlite.insertContact(node, capturedImageUri.toString());
+                    Cursor cursor = customerSqlite.getData(node);
+                    if (cursor != null)
+                        cursor.moveToFirst();
+                    String urladd = cursor.getString(1);
+                    Log.d("urlsaved", urladd);
+                    customerSqlite.close();
+                    SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd-MM-yyyy");
+                    Date todayDate = new Date();
+                    String thisDate = simpleDateFormat.format(todayDate);
+                    driverDayDelivery.child(thisDate).child(node).setValue("delivered");
 
 
-                    //  globalProvider.setNode(null);
-                    // globalProvider.setStarted(false);
 
-
-
-
-                    Intent intet = new Intent(DestinationActivity.this, MainPage.class);
+                    Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
                     startActivity(intet);
+                }
                 }
 
 
 
 
 
-            }
+
         });
+
+
     }
 
     private void convertAddress() {
-        Geocoder geocoder = new Geocoder(DestinationActivity.this, Locale.getDefault());
+        Geocoder geocoder = new Geocoder(DeliveredActivity.this, Locale.getDefault());
         try {
             List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
 
@@ -327,20 +342,18 @@ public class DestinationActivity extends AppCompatActivity {
         if (requestcode == RC_PHOTO_PICKER && resultcode == RESULT_OK) {
 
             //  final Uri SelectedImageUri = data.getData();
-            progressDialog = new ProgressDialog(DestinationActivity.this);
-            progressDialog.setMax(100);
-            progressDialog.setMessage("Uploading...");
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progressDialog.show();
-            progressDialog.setCancelable(false);
+
             Uri uri = capturedImageUri;
             Log.d("uripic",capturedImageUri.getLastPathSegment());
-            Bitmap myImg = BitmapFactory.decodeFile(uri.getPath());
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 2;
+            Bitmap myImg = BitmapFactory.decodeFile(uri.getPath(),options);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             myImg.compress(Bitmap.CompressFormat.JPEG,100,baos);
             byte[] b = baos.toByteArray();
 
             imgview.setImageBitmap(myImg);
+            Toast.makeText(DeliveredActivity.this,"Photo Saved!",Toast.LENGTH_SHORT).show();
 
 
 
@@ -353,39 +366,7 @@ public class DestinationActivity extends AppCompatActivity {
             */
 
 //            Log.d("checkim",SelectedImageUri.toString());
-            StorageReference photoref = storageReference.child(capturedImageUri.getLastPathSegment());
 
-            UploadTask uploadTask = photoref.putBytes(b);
-            uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                   long l= taskSnapshot.getTotalByteCount();
-
-                   Log.d("checkimg",l+"");
-                    double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                    //sets and increments value of progressbar
-                    progressDialog.incrementProgressBy((int) progress);
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    Log.d("imageexception", exception.getMessage());
-                    Toast.makeText(DestinationActivity.this,"Error in uploading!",Toast.LENGTH_SHORT).show();
-                    progressDialog.dismiss();
-                    // Handle unsuccessful uploads
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                    progressDialog.dismiss();
-                    Toast.makeText(DestinationActivity.this,"Upload Successful!",Toast.LENGTH_SHORT).show();
-                    downloadUrl = taskSnapshot.getDownloadUrl();
-                    Log.d("checkurld", downloadUrl.toString());
-
-
-                }
-            });
 
             /*
             photoref.putFile(capturedImageUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -403,11 +384,21 @@ public class DestinationActivity extends AppCompatActivity {
 
         }
     }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
     public void onDestroy()
     {
         super.onDestroy();
         if(br!=null)
-        unregisterReceiver(br);
+            unregisterReceiver(br);
     }
 
     private File createImageFile() throws IOException {
@@ -425,7 +416,5 @@ public class DestinationActivity extends AppCompatActivity {
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
-
-
 
 }

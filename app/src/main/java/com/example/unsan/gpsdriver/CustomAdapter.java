@@ -48,7 +48,7 @@ class CustomAdapter extends ArrayAdapter<CustomerNode> {
         if(c!=null)
             if(MainPage.sorted)
             {
-                tv.setText(customerNode.getCustomer().Address);
+                tv.setText(customerNode.getCustomer().getAddress());
             }
             else
                 tv.setText(customerNode.getRestaurantName());
@@ -57,7 +57,8 @@ class CustomAdapter extends ArrayAdapter<CustomerNode> {
         listV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent=new Intent(context,CustomerDetail.class);
+                //Intent intent=new Intent(context,CustomerDetail.class);
+                Intent intent=new Intent(context,DeliveredActivity.class);
                 intent.putExtra("customernd",customerNode);
                 context.startActivity(intent);
 

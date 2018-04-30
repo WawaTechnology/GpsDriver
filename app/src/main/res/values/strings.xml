@@ -8,4 +8,6 @@
     <string name="action_sign_in_short"> sign in </string>
     <string name="search">Search</string>
     <string name="no_result">No Result Found</string>
+    <string name="prompt_carN">Car Number</string>
+    <string name="prompt_carInfo">Car Info</string>
 </resources>

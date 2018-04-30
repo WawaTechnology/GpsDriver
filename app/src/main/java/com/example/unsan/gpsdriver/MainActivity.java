@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -12,9 +13,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -35,7 +39,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     EditText ed1,ed2;
     Button submit;
@@ -47,6 +51,13 @@ public class MainActivity extends AppCompatActivity {
     DatabaseReference loginReference;
     boolean matched;
     List<String> HistoryList;
+    EditText carInfoEdit;
+    DatabaseReference driverDb,driverCarDetails;
+    List<String> carNumbers;
+    Spinner spinner;
+    ArrayAdapter<String> arrayAdapter;
+    String carNumber;
+
 
 
 
@@ -59,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
         submit=(Button)findViewById(R.id.submit);
         deleteEmail=(ImageView)findViewById(R.id.deleteEmail);
         deletePsd=(ImageView)findViewById(R.id.deletePsd);
+
+        carInfoEdit=(EditText) findViewById(R.id.carInfo);
         deleteEmail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -72,9 +85,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+        driverDb=FirebaseDatabase.getInstance().getReference("Driver");
+        driverCarDetails=FirebaseDatabase.getInstance().getReference("driverCarDb");
+        spinner=(Spinner) findViewById(R.id.sp1);
         boolean val=sharedPreferences.getBoolean("isLogin",false);
+
         Log.d("getb",""+val);
         HistoryList=new ArrayList<>();
+        carNumbers=new ArrayList<>();
+        for(int i=1;i<=30;i++)
+        {
+            carNumbers.add("car "+i);
+
+        }
+        arrayAdapter=new ArrayAdapter<String>(MainActivity.this,R.layout.support_simple_spinner_dropdown_item,carNumbers);
+
+        spinner.setAdapter(arrayAdapter);
+        spinner.setOnItemSelectedListener(MainActivity.this);
 
         if(sharedPreferences.getBoolean("isLogin",false))
         {
@@ -82,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         }
         loginReference=FirebaseDatabase.getInstance().getReference("DriverRecord");
+
 
 
         int permissionCheck = ContextCompat.checkSelfPermission(this,
@@ -105,6 +133,12 @@ public class MainActivity extends AppCompatActivity {
                 {
                     Toast.makeText(MainActivity.this,"Email and Password can not be empty",Toast.LENGTH_SHORT).show();
                 }
+                else if (carInfoEdit.getText().length()<=0)
+                    {
+                        Toast.makeText(MainActivity.this,"CarNumber and CarInformation can not be empty",Toast.LENGTH_SHORT).show();
+                    }
+
+
                 else
                 {
                     checkLoginDb();
@@ -113,6 +147,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+    }
+    @Override
+    public void onBackPressed() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            finishAffinity();
+        }
     }
 
     private void checkLoginDb() {
@@ -121,23 +162,54 @@ public class MainActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists())
                 {
-                   String email= dataSnapshot.getValue(String.class);
+                   final String email= dataSnapshot.getValue(String.class);
                    if(email.equals(ed1.getText().toString()))
                    {
                        matched=true;
-                       SharedPreferences.Editor editor=sharedPreferences.edit();
-                       editor.putBoolean("isLogin",true);
-                       editor.putString("email",email);
 
-                       editor.commit();
+
+                       driverDb.addListenerForSingleValueEvent(new ValueEventListener() {
+                           @Override
+                           public void onDataChange(DataSnapshot dataSnapshot) {
+                               for(DataSnapshot snapshot:dataSnapshot.getChildren())
+                               {
+                                   Driver driver=snapshot.getValue(Driver.class);
+                                   if(driver.getEmail().equals(email))
+                                   {
+                                       String driverName=snapshot.getKey();
+                                       long phoneNumber=driver.getPhone();
+                                       DriverCar driverCar=new DriverCar(carNumber,carInfoEdit.getText().toString(),phoneNumber);
+                                       driverCarDetails.child(driverName).setValue(driverCar);
+                                       SharedPreferences.Editor editor=sharedPreferences.edit();
+                                       editor.putBoolean("isLogin",true);
+                                       editor.putString("email",email);
+                                       editor.putString("dname",driverName);
+                                       editor.putString("carNumber",carNumber);
+                                       editor.putString("carInfo",carInfoEdit.getText().toString());
+
+                                       editor.commit();
+                                   }
+
+                               }
+                           }
+
+                           @Override
+                           public void onCancelled(DatabaseError databaseError) {
+
+                           }
+                       });
+
+
                        try {
                            setHistoryList();
                        } catch (IOException e) {
                            e.printStackTrace();
                        }
+
                        Intent intent =new Intent(MainActivity.this,MainPage.class);
                        //Intent intent =new Intent(MainActivity.this,TestActivity.class);
                        startActivity(intent);
+                       finish();
 
                    }
                 }
@@ -220,5 +292,15 @@ public class MainActivity extends AppCompatActivity {
 
             ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION},PERMISSION_REQUEST_CODE);
         }
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        carNumber=adapterView.getItemAtPosition(i).toString();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
     }
 }

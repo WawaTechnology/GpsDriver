@@ -3,6 +3,7 @@ package com.example.unsan.gpsdriver;
 import android.app.SearchManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
@@ -41,6 +42,7 @@ public class SearchResultsActivity extends AppCompatActivity {
         tvw=(TextView)findViewById(R.id.noResult);
 
         list=new ArrayList<CustomerNode>();
+      getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         restaurantReference= FirebaseDatabase.getInstance().getReference("Customer");
         listAdapter = new CustomAdapter(this, R.layout.searchtext, list);
         lvw.setAdapter(listAdapter);
@@ -108,6 +110,16 @@ public class SearchResultsActivity extends AppCompatActivity {
         });
 
         return super.onCreateOptionsMenu(menu);
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }
