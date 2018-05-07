@@ -69,6 +69,7 @@ public class DeliveredActivity extends AppCompatActivity {
     FirebaseDatabase fbd;
     ProgressDialog progressDialog;
     TextView name, phone, addressTextView, restName, zipText;
+    DatabaseReference customerDeliveredReference;
 
     private CustomerSqlite customerSqlite;
 
@@ -84,7 +85,7 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
     private StorageReference storageReference;
-    static Uri capturedImageUri = null;
+ Uri capturedImageUri = null;
     String mCurrentPhotoPath;
 
     String dateString;
@@ -130,6 +131,7 @@ public class DeliveredActivity extends AppCompatActivity {
         customerSqlite = new CustomerSqlite(this);
 
 
+
         takeButton = (ImageButton) findViewById(R.id.imgbut);
 
 
@@ -149,11 +151,13 @@ public class DeliveredActivity extends AppCompatActivity {
         driverName = sharedPreferences.getString("dname", null);
         carNumber = sharedPreferences.getString("carNumber", null);
 
+
         fbd = FirebaseDatabase.getInstance();
 
 
         destinationReference = fbd.getReference("DriverDelivery");
         driverDayDelivery=fbd.getReference("driverDayRecord");
+        customerDeliveredReference=fbd.getReference("CustomerTodayRecord");
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -295,6 +299,7 @@ public class DeliveredActivity extends AppCompatActivity {
                     Date todayDate = new Date();
                     String thisDate = simpleDateFormat.format(todayDate);
                     driverDayDelivery.child(thisDate).child(node).setValue("delivered");
+                    customerDeliveredReference.child(thisDate).child(customerN.getRestaurantName()).setValue("delivered");
 
 
 

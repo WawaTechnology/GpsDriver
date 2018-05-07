@@ -79,10 +79,12 @@ public class ImageRecyclerAdapter extends RecyclerView.Adapter<ImageRecyclerAdap
         //ImageView imgView;
         TextView locText;
 
+
         public MyViewHolder(View itemView) {
             super(itemView);
             //imgView=(ImageView) itemView.findViewById(R.id.imgv);
             locText=(TextView)itemView.findViewById(R.id.loc);
+
         }
     }
 }

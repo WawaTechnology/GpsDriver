@@ -3,6 +3,59 @@
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+    <LinearLayout
+        android:layout_marginTop="15dp"
+
+        android:id="@+id/layout01"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:paddingLeft="7dp"
+        android:paddingRight="7dp"
+        android:paddingBottom="7dp"
+
+
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp"
+
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="Vehicle Number: "/>
+        <Spinner
+
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+            android:id="@+id/sp2"></Spinner>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:paddingLeft="7dp"
+        android:paddingRight="7dp"
+        android:paddingBottom="7dp"
+
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="Car: "/>
+        <Spinner
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:id="@+id/sp1"></Spinner>
+    </LinearLayout>
+
+
 
 
     <LinearLayout
@@ -21,14 +74,7 @@
 
 
         android:id="@+id/list_view"></ListView>
-    <LinearLayout
-        android:id="@+id/side_index"
-        android:layout_width="50dp"
-        android:layout_height="fill_parent"
-        android:background="#c3c3c3"
-        android:gravity="center_horizontal"
-        android:orientation="vertical" >
-    </LinearLayout>
+
     </LinearLayout>
 
     <ProgressBar

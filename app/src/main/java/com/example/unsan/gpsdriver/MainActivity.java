@@ -39,7 +39,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class MainActivity extends AppCompatActivity  {
 
     EditText ed1,ed2;
     Button submit;
@@ -51,12 +51,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     DatabaseReference loginReference;
     boolean matched;
     List<String> HistoryList;
-    EditText carInfoEdit;
-    DatabaseReference driverDb,driverCarDetails;
-    List<String> carNumbers;
-    Spinner spinner;
-    ArrayAdapter<String> arrayAdapter;
-    String carNumber;
+
+    DatabaseReference driverDb;
+
+
+
+
 
 
 
@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         deleteEmail=(ImageView)findViewById(R.id.deleteEmail);
         deletePsd=(ImageView)findViewById(R.id.deletePsd);
 
-        carInfoEdit=(EditText) findViewById(R.id.carInfo);
+
         deleteEmail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -86,22 +86,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         });
         sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
         driverDb=FirebaseDatabase.getInstance().getReference("Driver");
-        driverCarDetails=FirebaseDatabase.getInstance().getReference("driverCarDb");
-        spinner=(Spinner) findViewById(R.id.sp1);
+
+
         boolean val=sharedPreferences.getBoolean("isLogin",false);
 
         Log.d("getb",""+val);
         HistoryList=new ArrayList<>();
-        carNumbers=new ArrayList<>();
-        for(int i=1;i<=30;i++)
-        {
-            carNumbers.add("car "+i);
 
-        }
-        arrayAdapter=new ArrayAdapter<String>(MainActivity.this,R.layout.support_simple_spinner_dropdown_item,carNumbers);
-
-        spinner.setAdapter(arrayAdapter);
-        spinner.setOnItemSelectedListener(MainActivity.this);
 
         if(sharedPreferences.getBoolean("isLogin",false))
         {
@@ -133,10 +124,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 {
                     Toast.makeText(MainActivity.this,"Email and Password can not be empty",Toast.LENGTH_SHORT).show();
                 }
-                else if (carInfoEdit.getText().length()<=0)
-                    {
-                        Toast.makeText(MainActivity.this,"CarNumber and CarInformation can not be empty",Toast.LENGTH_SHORT).show();
-                    }
+
 
 
                 else
@@ -178,14 +166,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                                    {
                                        String driverName=snapshot.getKey();
                                        long phoneNumber=driver.getPhone();
-                                       DriverCar driverCar=new DriverCar(carNumber,carInfoEdit.getText().toString(),phoneNumber);
-                                       driverCarDetails.child(driverName).setValue(driverCar);
+
                                        SharedPreferences.Editor editor=sharedPreferences.edit();
                                        editor.putBoolean("isLogin",true);
                                        editor.putString("email",email);
                                        editor.putString("dname",driverName);
-                                       editor.putString("carNumber",carNumber);
-                                       editor.putString("carInfo",carInfoEdit.getText().toString());
+
 
                                        editor.commit();
                                    }
@@ -294,13 +280,5 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        carNumber=adapterView.getItemAtPosition(i).toString();
-    }
 
-    @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
-    }
 }

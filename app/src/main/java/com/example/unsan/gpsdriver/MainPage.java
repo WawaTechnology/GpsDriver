@@ -13,10 +13,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,36 +40,49 @@ import static android.view.View.GONE;
  * Created by Unsan on 12/4/18.
  */
 
-public class MainPage extends AppCompatActivity implements View.OnClickListener {
+public class MainPage extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     ListView listView,alphaViewList;
     DatabaseReference customerReference,driverDataRef;
     public static boolean sorted;
     Map<String, Integer> mapIndex;
     String email;
+    DatabaseReference driverCarDetails;
 ValueEventListener valueEventListener,dvEventListner;
 
 
     List<CustomerNode> customerList;
+
     CustomAdapter customAdapter;
     ProgressBar pgbar;
     SharedPreferences sharedPreferences;
     ActionBar actionBar;
     String driverName,carNumber;
+    Spinner spinner,spinner2;
+   // List<String> carNumbers;
+   // List<String> vehicleNumbers;
+    String vehicleNumber;
 
 
 
 
-    ArrayAdapter<String> arrayAdapter;
+
+    ArrayAdapter<String> arrayAdapter,vehicleadapter;
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_page);
         Log.d("tag","oncreate");
         pgbar=(ProgressBar) findViewById(R.id.pgbar);
+        spinner=(Spinner) findViewById(R.id.sp1);
+        spinner2=(Spinner) findViewById(R.id.sp2);
+       // vehicleNumbers=new ArrayList<>();
+        driverCarDetails=FirebaseDatabase.getInstance().getReference("driverCarDb");
 
         FirebaseDatabase fbd=FirebaseDatabase.getInstance();
         driverDataRef=fbd.getReference("Driver");
+
+
 
 
 
@@ -82,12 +97,53 @@ ValueEventListener valueEventListener,dvEventListner;
 
         customerList=new ArrayList<>();
         listView=(ListView) findViewById(R.id.list_view);
+
         customerReference=fbd.getReference("Customer");
         customerReference.keepSynced(true);
+        //carNumbers=new ArrayList<>();
+        //ADD vehicle number
+       // addVehicleNumbers();
+       /* for(int i=1;i<=20;i++)
+        {
+            carNumbers.add("car "+i);
+
+        }
+        */
+        sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+        String cNumber= sharedPreferences.getString("carNumber",null);
+        String vNumber=sharedPreferences.getString("vehicleNumber",null);
+        arrayAdapter=new ArrayAdapter<String>(MainPage.this,R.layout.spinner_item,getResources().getStringArray(R.array.carArray));
+        vehicleadapter=new ArrayAdapter<String>(MainPage.this,R.layout.spinner_item,getResources().getStringArray(R.array.vehicleNames));
+
+
+        spinner.setAdapter(arrayAdapter);
+        if(cNumber!=null)
+        {
+            int spinnerPosition = arrayAdapter.getPosition(cNumber);
+            spinner.setSelection(spinnerPosition);
+        }
+        else
+        {
+            spinner.setSelection(0);
+        }
+
+        spinner.setOnItemSelectedListener(MainPage.this);
+
+        spinner2.setAdapter(vehicleadapter);
+        if(vNumber!=null)
+        {
+            int spinnerPos = arrayAdapter.getPosition(vNumber);
+            spinner2.setSelection(spinnerPos);
+        }
+        else {
+            spinner2.setSelection(0);
+        }
+        spinner2.setOnItemSelectedListener(MainPage.this);
 
 
 
         customAdapter=new CustomAdapter(MainPage.this,R.layout.simple_display,customerList);
+
         listView.setAdapter(customAdapter);
         customAdapter.notifyDataSetChanged();
         pgbar.setVisibility(View.VISIBLE);
@@ -97,6 +153,21 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
     }
+
+   /* private void addVehicleNumbers() {
+        vehicleNumbers.add("YP2095H");
+        vehicleNumbers.add("GBF6032M");
+        vehicleNumbers.add("GBD498C");
+        vehicleNumbers.add("GBD5898Z");
+        vehicleNumbers.add("GBG9001C");
+        vehicleNumbers.add("GBG3898X");
+        vehicleNumbers.add("GBC7432B");
+        vehicleNumbers.add("GBG7570P");
+
+
+    }
+    */
+
     public void onStart()
     {
         super.onStart();
@@ -156,12 +227,12 @@ ValueEventListener valueEventListener,dvEventListner;
 
        //get from source
 
-        sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+
         email=sharedPreferences.getString("email",null);
         driverName=sharedPreferences.getString("dname",null);
-        carNumber=sharedPreferences.getString("carNumber",null);
+
         menu.findItem(R.id.name).setTitle(driverName);
-        menu.findItem(R.id.carNumber).setTitle("car Number: "+carNumber);
+
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -203,8 +274,6 @@ ValueEventListener valueEventListener,dvEventListner;
                 editor.putString("email",null);
 
 
-                editor.putString("carNumber",null);
-                editor.putString("carInfo",null);
 
                 editor.commit();
             Intent intent=new Intent(MainPage.this,MainActivity.class);
@@ -283,12 +352,11 @@ ValueEventListener valueEventListener,dvEventListner;
                         Customer c = ds.getValue(Customer.class);
                         CustomerNode customerNode = new CustomerNode(key, c);
                         customerList.add(customerNode);
+
                         customAdapter.notifyDataSetChanged();
                     }
                     pgbar.setVisibility(GONE);
-                    getIndexList(customerList);
 
-                    displayIndex();
                 }
                 else
                 {
@@ -307,32 +375,8 @@ ValueEventListener valueEventListener,dvEventListner;
 
     }
 
-    private void getIndexList(List<CustomerNode> customerList) {
-        mapIndex = new LinkedHashMap<String, Integer>();
-        for (int i = 0; i < customerList.size(); i++) {
-            CustomerNode cn=customerList.get(i);
-            String restName=cn.restaurantName;
 
-            String index = restName.substring(0, 1);
 
-            if (mapIndex.get(index) == null)
-                mapIndex.put(index, i);
-        }
-
-    }
-    private void displayIndex() {
-        LinearLayout indexLayout = (LinearLayout) findViewById(R.id.side_index);
-
-        TextView textView;
-        List<String> indexList = new ArrayList<String>(mapIndex.keySet());
-        for (String index : indexList) {
-            textView = (TextView) getLayoutInflater().inflate(
-                    R.layout.side_index_item, null);
-            textView.setText(index);
-            textView.setOnClickListener(this);
-            indexLayout.addView(textView);
-        }
-    }
     public void onPause()
     {
         super.onPause();
@@ -363,14 +407,44 @@ ValueEventListener valueEventListener,dvEventListner;
         Log.d("tag","restart");
     }
 
-    @Override
-    public void onClick(View view) {
-        TextView selectedIndex = (TextView) view;
-        listView.setSelection(mapIndex.get(selectedIndex.getText()));
-    }
+
     public void onDestroy()
     {
         super.onDestroy();
+
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        switch(adapterView.getId()) { //Run Code For Major Spinner
+            case R.id.sp1: { // code for first spinner. Depending on spinner.getselecteditem assign adapter to second spinner
+                carNumber = adapterView.getItemAtPosition(i).toString();
+                SharedPreferences.Editor editor=sharedPreferences.edit();
+                editor.putString("carNumber", carNumber);
+                editor.commit();
+
+                break;
+            }
+            case R.id.sp2: { // code for second spinner
+                //Use get item selected and get selected item position
+                vehicleNumber = adapterView.getItemAtPosition(i).toString();
+                SharedPreferences.Editor editor=sharedPreferences.edit();
+                editor.putString("vehicleNumber", vehicleNumber);
+                editor.commit();
+
+
+                break;
+            }
+        }
+
+
+
+
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
 
     }
 }

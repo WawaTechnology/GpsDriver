@@ -1,6 +1,7 @@
 package com.example.unsan.gpsdriver;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -20,8 +21,10 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -29,7 +32,9 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -48,6 +53,11 @@ public class ShowImagesActivity extends AppCompatActivity {
     ProgressDialog progressDialog;
     private Uri downloadUrl;
     Uri uri[];
+    ValueEventListener valueEventListener;
+    Button submitStatus;
+    boolean connected;
+
+
 
     public void onCreate(Bundle savedInstanceState)
 {
@@ -55,13 +65,20 @@ public class ShowImagesActivity extends AppCompatActivity {
     setContentView(R.layout.delivery_list);
     rcv=(RecyclerView)findViewById(R.id.list_images);
     submitimgs=(Button)findViewById(R.id.submit_imgs);
+    submitStatus=(Button) findViewById(R.id.status);
     customerSqlite=new CustomerSqlite(ShowImagesActivity.this);
     imgList=new ArrayList<>();
     imgKey=new ArrayList<>();
+
     imgDatabase=FirebaseDatabase.getInstance().getReference("imgReferences");
     FirebaseStorage firebaseStorage=FirebaseStorage.getInstance();
     storageReference = firebaseStorage.getReference().child("destination_photo");
+
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+
+
 
     imageRecyclerAdapter=new ImageRecyclerAdapter(ShowImagesActivity.this,imgList);
     LinearLayoutManager linearLayoutManager=new LinearLayoutManager(ShowImagesActivity.this,LinearLayoutManager.VERTICAL,false);
@@ -87,66 +104,33 @@ public class ShowImagesActivity extends AppCompatActivity {
         } while (cursor.moveToNext());
     }
     uri=new Uri[imgList.size()];
+    submitStatus.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Intent intent=new Intent(ShowImagesActivity.this,DayRecordActivity.class);
+            startActivity(intent);
+        }
+    });
 
 
 
     submitimgs.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+
+
             if(imgList.size()<=0)
             {
                 Toast.makeText(ShowImagesActivity.this,"No Photos Found!",Toast.LENGTH_LONG).show();
             }
+
+
+
+
             else {
-                for (int i = 0; i < imgList.size(); i++) {
-                    final String img = imgList.get(i);
-                    uri[i] = Uri.parse(img);
-                  final  File file=new File(uri[i].getPath());
-                    final String key = imgKey.get(i);
-                    final int imageNum = i + 1;
+                checkFirebaseConnection();
 
 
-                    StorageReference ref = storageReference.child(uri[i].getLastPathSegment());
-                    ref.putFile(uri[i])
-                            .addOnSuccessListener(ShowImagesActivity.this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                @Override
-                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                                    String content = downloadUrl.toString();
-                                    if (content.length() > 0) {
-
-                                        imgDatabase.child(key).setValue(content);
-                                        customerSqlite.deleteDelivery(key);
-                                        imgList.remove(img);
-                                        imageRecyclerAdapter.notifyDataSetChanged();
-                                        try
-                                        {
-                                            if(file.exists())
-                                            {
-                                               boolean val= file.delete();
-                                               Log.d("filedeletedstatus",val+"");
-                                            }
-                                        }
-                                        catch(Exception e)
-                                        {
-                                            e.printStackTrace();
-                                        }
-                                        Toast.makeText(ShowImagesActivity.this, "image " + imageNum + " added", Toast.LENGTH_LONG).show();
-
-                                    }
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-
-                            Toast.makeText(ShowImagesActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-
-
-                }
-                customerSqlite.close();
 
 
 
@@ -251,7 +235,81 @@ public class ShowImagesActivity extends AppCompatActivity {
 
 
 
+public void checkFirebaseConnection()
+{
+    DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
+    connectedRef.addValueEventListener(new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot snapshot) {
+            connected = snapshot.getValue(Boolean.class);
+            if (connected) {
+                for (int i = 0; i < imgList.size(); i++) {
+                    final String img = imgList.get(i);
+                    uri[i] = Uri.parse(img);
+                    final  File file=new File(uri[i].getPath());
+                    final String key = imgKey.get(i);
+                    final int imageNum = i + 1;
 
+
+                    StorageReference ref = storageReference.child(uri[i].getLastPathSegment());
+                    ref.putFile(uri[i])
+                            .addOnSuccessListener(ShowImagesActivity.this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                @Override
+                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                                    String content = downloadUrl.toString();
+                                    if (content.length() > 0) {
+
+                                        imgDatabase.child(key).setValue(content);
+                                        customerSqlite.deleteDelivery(key);
+                                        imgList.remove(img);
+                                        imageRecyclerAdapter.notifyDataSetChanged();
+                                        try
+                                        {
+                                            if(file.exists())
+                                            {
+                                                boolean val= file.delete();
+                                                Log.d("filedeletedstatus",val+"");
+                                            }
+                                        }
+                                        catch(Exception e)
+                                        {
+                                            e.printStackTrace();
+                                        }
+                                        Toast.makeText(ShowImagesActivity.this, "image " + imageNum + " added", Toast.LENGTH_LONG).show();
+
+                                    }
+
+                                }
+                            }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+
+                            Toast.makeText(ShowImagesActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+
+                }
+
+            } else {
+                Toast.makeText(ShowImagesActivity.this,"Connection Issue! Please try again later!",Toast.LENGTH_LONG).show();
+            }
+        }
+
+        @Override
+        public void onCancelled(DatabaseError error) {
+            System.err.println("Listener was cancelled");
+        }
+    });
+
+
+}
+public void onDestroy()
+{
+    super.onDestroy();
+    customerSqlite.close();
+}
 
 public void onStart()
 {

@@ -54,6 +54,7 @@
         <activity android:name=".SearchResultsActivity"
             android:parentActivityName=".MainPage"></activity>
         <activity android:name=".CustomerDetail"></activity>
+        <activity android:name=".DayRecordActivity"></activity>
 
 
     </application>

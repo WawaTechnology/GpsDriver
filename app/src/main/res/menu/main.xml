@@ -8,10 +8,7 @@
     android:title="Name"
 
     app:showAsAction="always"/>
-    <item
-        android:id="@+id/carNumber"
-        android:title="car Number"
-        app:showAsAction="always"/>
+
     <item
         android:id="@+id/searchid"
         android:title="@string/search"
