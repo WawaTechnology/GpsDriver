@@ -37,8 +37,11 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -64,12 +67,12 @@ public class DeliveredActivity extends AppCompatActivity {
     int RC_PHOTO_PICKER = 123;
     ImageView imgview;
     Customer customer;
-    CustomerNode customerN;
+
     FirebaseStorage firebaseStorage;
     FirebaseDatabase fbd;
     ProgressDialog progressDialog;
     TextView name, phone, addressTextView, restName, zipText;
-    DatabaseReference customerDeliveredReference;
+    DatabaseReference customerDeliveredReference,customerReference;
 
     private CustomerSqlite customerSqlite;
 
@@ -97,6 +100,7 @@ public class DeliveredActivity extends AppCompatActivity {
     Uri downloadUrl;
     String node;
     String driverName;
+    String customerchinese;
 
     SharedPreferences sharedPreferences;
 
@@ -158,6 +162,7 @@ public class DeliveredActivity extends AppCompatActivity {
         destinationReference = fbd.getReference("DriverDelivery");
         driverDayDelivery=fbd.getReference("driverDayRecord");
         customerDeliveredReference=fbd.getReference("CustomerTodayRecord");
+        customerReference=fbd.getReference("Customer");
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -168,14 +173,12 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
         Intent intent = getIntent();
-        customerN = (CustomerNode) intent.getSerializableExtra("customernd");
-        customer = customerN.getCustomer();
-        name.setText(customer.getContactPerson());
-        phone.setText(customer.getContactNumber() + "");
-        addressTextView.setText(customer.getAddress());
+         customerchinese=intent.getStringExtra("customernd");
+         Log.d("checkcustomer",customerchinese);
+        getCustomerData(customerchinese);
 
-        restName.setText(customerN.getRestaurantName());
-        zipText.setText(customer.getZip() + "");
+
+
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -209,7 +212,7 @@ public class DeliveredActivity extends AppCompatActivity {
         // startAddress=globalProvider.getStartingAddress();
         //  node=globalProvider.getNode();
 
-        customer = customerN.getCustomer();
+
 
 
         // customer= sharedPreferences.getString("Customer",null);
@@ -285,7 +288,7 @@ public class DeliveredActivity extends AppCompatActivity {
                     long tm = -1 * new Date().getTime();
 
                     // Delivery delivery = new Delivery(tm,startTime, desttime, dateString, downloadUrl.toString(), customerN.getRestaurantName(), customer.Address, startAddress, carNumber, "name1", gpsDestAddress);
-                    DriverDelivery deliveryDriver = new DriverDelivery(desttime, dateString, tm, customerN.getRestaurantName(), customer.address, gpsDestAddress, carNumber, driverName);
+                    DriverDelivery deliveryDriver = new DriverDelivery(desttime, dateString, tm, customerchinese, customer.address, gpsDestAddress, carNumber, driverName);
                     node = destinationReference.push().getKey();
                     destinationReference.child(node).setValue(deliveryDriver);
                     customerSqlite.insertContact(node, capturedImageUri.toString());
@@ -299,7 +302,7 @@ public class DeliveredActivity extends AppCompatActivity {
                     Date todayDate = new Date();
                     String thisDate = simpleDateFormat.format(todayDate);
                     driverDayDelivery.child(thisDate).child(node).setValue("delivered");
-                    customerDeliveredReference.child(thisDate).child(customerN.getRestaurantName()).setValue("delivered");
+                    customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue("delivered");
 
 
 
@@ -313,6 +316,39 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
 
+        });
+
+
+    }
+
+    private void getCustomerData(final String customerchinese) {
+        Log.d("checkchinesesize",customerchinese.length()+"");
+        customerReference.child(customerchinese).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    Log.d("existd","true");
+                }
+                customer=dataSnapshot.getValue(Customer.class);
+                if(customer==null)
+                {
+                    Log.d("nullcustomer","null");
+                }
+                else {
+                    name.setText(customer.getContactPerson() + "");
+                    phone.setText(customer.getContactNumber() + "");
+                    addressTextView.setText(customer.getAddress());
+
+                    restName.setText(customerchinese);
+                    zipText.setText(customer.getZip() + "");
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
         });
 
 

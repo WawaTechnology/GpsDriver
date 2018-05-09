@@ -25,13 +25,22 @@ import java.util.List;
  * Created by Unsan on 12/4/18.
  */
 
-class CustomAdapter extends ArrayAdapter<CustomerNode> {
+class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
     Context context;
-    List<CustomerNode> objects;
+    List<CustomerEngChinese> objects;
     SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd-MM-yyyy");
     Date todayDate = new Date();
     String thisDate ;
     DatabaseReference customerTodayReference;
+
+    public CustomAdapter(@NonNull Context context, int resource, @NonNull List<CustomerEngChinese> objects) {
+        super(context, resource, objects);
+        this.context=context;
+        this.objects=objects;
+        thisDate= simpleDateFormat.format(todayDate);
+        customerTodayReference = FirebaseDatabase.getInstance().getReference("CustomerTodayRecord");
+        Log.d("thisdate",thisDate);
+    }
 
 
     @Override
@@ -42,14 +51,7 @@ class CustomAdapter extends ArrayAdapter<CustomerNode> {
             return -1;
     }
 
-    public CustomAdapter(@NonNull Context context, int resource, @NonNull List<CustomerNode> objects) {
-        super(context, resource,0, objects);
-        this.context=context;
-        this.objects=objects;
-        thisDate= simpleDateFormat.format(todayDate);
-        customerTodayReference = FirebaseDatabase.getInstance().getReference("CustomerTodayRecord");
-        Log.d("thisdate",thisDate);
-    }
+
 
     @NonNull
     @Override
@@ -57,24 +59,29 @@ class CustomAdapter extends ArrayAdapter<CustomerNode> {
         View listV=convertView;
         if(listV==null)
             listV= LayoutInflater.from(context).inflate(R.layout.simple_display,parent,false);
-
-        final CustomerNode customerNode=objects.get(position);
-        final Customer c=customerNode.getCustomer();
         TextView tv=(TextView)listV.findViewById(R.id.custnamedisp);
-       final TextView tv1=(TextView)listV.findViewById(R.id.delivery_status);
+        TextView engtv=(TextView)listV.findViewById(R.id.customereng);
+        final TextView tv1=(TextView)listV.findViewById(R.id.delivery_status);
 
-        if(c!=null) {
-            customerTodayReference.child(thisDate).child(customerNode.getRestaurantName()).addListenerForSingleValueEvent(new ValueEventListener() {
+        final CustomerEngChinese customer=objects.get(position);
+
+
+
+        if(customer!=null) {
+            customerTodayReference.child(thisDate).child(((MainPage)context).carNumber).child(customer.getRestChinese()).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     if(dataSnapshot.exists())
                     {
-                        Log.d("customeRec",customerNode.getRestaurantName());
+                        Log.d("customeRec",customer.getRestChinese());
+                        if(dataSnapshot.getValue(String.class).equals("delivered"))
                         tv1.setText("delivered");
+                        else
+                            tv1.setText("Waiting");
                     }
                     else
                     {
-                        tv1.setText("Pending");
+                        tv1.setText("No Order");
                     }
 
                 }
@@ -92,11 +99,10 @@ class CustomAdapter extends ArrayAdapter<CustomerNode> {
         }
 
 
-        if(c!=null) {
-            if (MainPage.sorted) {
-                tv.setText(customerNode.getCustomer().getAddress());
-            } else
-                tv.setText(customerNode.getRestaurantName());
+        if(customer!=null) {
+
+                tv.setText(customer.getRestChinese());
+                engtv.setText(customer.getRestEnglish());
         }
         else
             tv.setText("No customer Found");
@@ -105,7 +111,7 @@ class CustomAdapter extends ArrayAdapter<CustomerNode> {
             public void onClick(View view) {
                 //Intent intent=new Intent(context,CustomerDetail.class);
                 Intent intent=new Intent(context,DeliveredActivity.class);
-                intent.putExtra("customernd",customerNode);
+                intent.putExtra("customernd",customer.getRestChinese());
                 context.startActivity(intent);
 
 

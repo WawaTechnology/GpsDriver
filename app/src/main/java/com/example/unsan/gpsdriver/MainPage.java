@@ -7,9 +7,11 @@ import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,14 +46,15 @@ public class MainPage extends AppCompatActivity implements AdapterView.OnItemSel
 
     ListView listView,alphaViewList;
     DatabaseReference customerReference,driverDataRef;
-    public static boolean sorted;
+
     Map<String, Integer> mapIndex;
     String email;
     DatabaseReference driverCarDetails;
 ValueEventListener valueEventListener,dvEventListner;
 
 
-    List<CustomerNode> customerList;
+
+    List<CustomerEngChinese> customerList;
 
     CustomAdapter customAdapter;
     ProgressBar pgbar;
@@ -86,8 +89,13 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
 
+
+
       actionBar=getSupportActionBar();
       actionBar.setDisplayShowTitleEnabled(false);
+
+
+
 
 
 
@@ -98,7 +106,7 @@ ValueEventListener valueEventListener,dvEventListner;
         customerList=new ArrayList<>();
         listView=(ListView) findViewById(R.id.list_view);
 
-        customerReference=fbd.getReference("Customer");
+        customerReference=fbd.getReference("CarsDb");
         customerReference.keepSynced(true);
         //carNumbers=new ArrayList<>();
         //ADD vehicle number
@@ -110,20 +118,21 @@ ValueEventListener valueEventListener,dvEventListner;
         }
         */
         sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
-        String cNumber= sharedPreferences.getString("carNumber",null);
+       carNumber= sharedPreferences.getString("carNumber",null);
         String vNumber=sharedPreferences.getString("vehicleNumber",null);
         arrayAdapter=new ArrayAdapter<String>(MainPage.this,R.layout.spinner_item,getResources().getStringArray(R.array.carArray));
         vehicleadapter=new ArrayAdapter<String>(MainPage.this,R.layout.spinner_item,getResources().getStringArray(R.array.vehicleNames));
 
 
         spinner.setAdapter(arrayAdapter);
-        if(cNumber!=null)
+        if(carNumber!=null)
         {
-            int spinnerPosition = arrayAdapter.getPosition(cNumber);
+            int spinnerPosition = arrayAdapter.getPosition(carNumber);
             spinner.setSelection(spinnerPosition);
         }
         else
         {
+            carNumber=arrayAdapter.getItem(0);
             spinner.setSelection(0);
         }
 
@@ -173,7 +182,7 @@ ValueEventListener valueEventListener,dvEventListner;
         super.onStart();
 
 
-        getCustomerData();
+
        // getDriverDetail();
     }
 
@@ -240,6 +249,11 @@ ValueEventListener valueEventListener,dvEventListner;
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
+            case R.id.refresh:
+            {
+                getCustomerData();
+                break;
+            }
             case R.id.searchid: {
                 Intent intent = new Intent(MainPage.this, SearchResultsActivity.class);
                 startActivity(intent);
@@ -247,17 +261,8 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
             }
-            case R.id.sortadd:
-            {
-                getCustomerAddress();
-                break;
 
-            }
-            case R.id.sortrest:
-            {
-                getCustomerData();
-                break;
-            }
+
             case R.id.show_deliveries:
             {
                 Intent intent=new Intent(MainPage.this,ShowImagesActivity.class);
@@ -287,58 +292,21 @@ ValueEventListener valueEventListener,dvEventListner;
     }
 
 
-    private void getCustomerAddress() {
-        Log.d("chksee","we are here");
-        sorted =true;
 
-        customerReference.orderByChild("address").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                customerList.clear();
-                if(dataSnapshot.hasChildren()) {
-
-                    pgbar.setVisibility(View.INVISIBLE);
-                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                        String key = ds.getKey();
-                        Log.d("checkkey", key);
-                        Customer c = ds.getValue(Customer.class);
-                        CustomerNode customerNode = new CustomerNode(key, c);
-                        customerList.add(customerNode);
-
-
-
-                    }
-                    customAdapter.notifyDataSetChanged();
-
-                }
-                else {
-                    pgbar.setVisibility(GONE);
-                    Toast.makeText(MainPage.this, "No record found", Toast.LENGTH_LONG)
-                            .show();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-
-    }
 
     public void onResume()
     {
         super.onResume();
+        getCustomerData();
         Log.d("tag","onresume");
 
     }
 
     private void getCustomerData() {
         Log.d("chksee","we are here");
-        sorted=false;
 
-       valueEventListener= customerReference.addValueEventListener(new ValueEventListener() {
+
+       valueEventListener= customerReference.child(carNumber).child("Restaurants").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Log.d("checkk","here");
@@ -349,9 +317,10 @@ ValueEventListener valueEventListener,dvEventListner;
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
                         String key = ds.getKey();
                         Log.d("checkkey", key);
-                        Customer c = ds.getValue(Customer.class);
-                        CustomerNode customerNode = new CustomerNode(key, c);
-                        customerList.add(customerNode);
+                        Object valueobj=ds.getValue(Object.class);
+                        String value=valueobj.toString();
+                        CustomerEngChinese customerEngChinese=new CustomerEngChinese(key,value);
+                        customerList.add(customerEngChinese);
 
                         customAdapter.notifyDataSetChanged();
                     }
@@ -362,6 +331,7 @@ ValueEventListener valueEventListener,dvEventListner;
                 {
                     Toast.makeText(MainPage.this,"No records found!",Toast.LENGTH_LONG).show();
                     pgbar.setVisibility(GONE);
+                    customAdapter.notifyDataSetChanged();
                 }
             }
 
@@ -422,6 +392,8 @@ ValueEventListener valueEventListener,dvEventListner;
                 SharedPreferences.Editor editor=sharedPreferences.edit();
                 editor.putString("carNumber", carNumber);
                 editor.commit();
+                getCustomerData();
+
 
                 break;
             }
@@ -447,4 +419,6 @@ ValueEventListener valueEventListener,dvEventListner;
     public void onNothingSelected(AdapterView<?> adapterView) {
 
     }
+
+
 }

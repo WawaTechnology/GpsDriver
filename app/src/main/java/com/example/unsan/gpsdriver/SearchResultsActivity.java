@@ -2,6 +2,7 @@ package com.example.unsan.gpsdriver;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -31,9 +32,11 @@ public class SearchResultsActivity extends AppCompatActivity {
     ListView lvw;
     TextView tvw;
 
-    List list;
-    ArrayAdapter<CustomerNode> listAdapter;
+    List<CustomerEngChinese> list;
+    ArrayAdapter<CustomerEngChinese> listAdapter;
+    SharedPreferences sharedPreferences;
     DatabaseReference restaurantReference;
+    String cNumber;
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -41,9 +44,12 @@ public class SearchResultsActivity extends AppCompatActivity {
         lvw=(ListView)findViewById(R.id.listview);
         tvw=(TextView)findViewById(R.id.noResult);
 
-        list=new ArrayList<CustomerNode>();
+        list=new ArrayList<>();
+        sharedPreferences=getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+      cNumber= sharedPreferences.getString("carNumber",null);
+        String vNumber=sharedPreferences.getString("vehicleNumber",null);
       getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        restaurantReference= FirebaseDatabase.getInstance().getReference("Customer");
+        restaurantReference= FirebaseDatabase.getInstance().getReference("CarsDb");
         listAdapter = new CustomAdapter(this, R.layout.searchtext, list);
         lvw.setAdapter(listAdapter);
 
@@ -67,21 +73,21 @@ public class SearchResultsActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(final String query) {
                 list.clear();
-                restaurantReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                restaurantReference.child(cNumber).child("Restaurants").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-
                         for(DataSnapshot ds:dataSnapshot.getChildren())
                         {
                             String key=ds.getKey();
-                            if(key.toLowerCase().contains(query.toLowerCase()))
+                            Object valueobj=ds.getValue(Object.class);
+                            String value=valueobj.toString();
+                            if(key.toLowerCase().contains(query.toLowerCase())||value.toLowerCase().contains(query.toLowerCase()))
 
                             {
 
-                                Log.d("checkkey",key);
-                                Customer c=ds.getValue(Customer.class);
-                                CustomerNode customerNode=new CustomerNode(key,c);
-                                list.add(customerNode);
+
+                                CustomerEngChinese customerEngChinese=new CustomerEngChinese(key,value);
+                                list.add(customerEngChinese);
                                 ;
                                 listAdapter.notifyDataSetChanged();
                                 tvw.setVisibility(View.GONE);
