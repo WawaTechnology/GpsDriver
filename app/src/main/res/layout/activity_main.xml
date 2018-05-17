@@ -86,6 +86,6 @@
         android:id="@+id/submit"
         android:textColor="@android:color/white"
         android:background="@drawable/round_login"
-        android:text="Submit"/>
+        android:text="@string/submit"/>
 
 </LinearLayout>

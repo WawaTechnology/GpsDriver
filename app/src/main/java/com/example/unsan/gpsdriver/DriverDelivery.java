@@ -16,15 +16,16 @@ public class DriverDelivery {
     String deliveryTime;
     String driverName;
 
-    public DriverDelivery(String deliveryTime, String deliveryDate, long timeval, String customer, String destinationAddress, String gpsDestinationAddress, String carNumber,String driverName) {
+    public DriverDelivery(String deliveryTime, String deliveryDate, long timeval, String customer, String destinationAddress, String carNumber,String vehicleNumber,String driverName) {
         this.deliveryTime = deliveryTime;
         this.deliveryDate = deliveryDate;
 
         this.timeval = timeval;
         this.customer = customer;
         this.destinationAddress = destinationAddress;
-        this.gpsDestinationAddress = gpsDestinationAddress;
+
         this.carNumber = carNumber;
+        this.vehicleNumber=vehicleNumber;
         this.driverName=driverName;
     }
     public DriverDelivery()
@@ -62,6 +63,14 @@ public class DriverDelivery {
         return customer;
     }
 
+    public String getVehicleNumber() {
+        return vehicleNumber;
+    }
+
+    public void setVehicleNumber(String vehicleNumber) {
+        this.vehicleNumber = vehicleNumber;
+    }
+
     public void setCustomer(String customer) {
         this.customer = customer;
     }
@@ -74,13 +83,7 @@ public class DriverDelivery {
         this.destinationAddress = destinationAddress;
     }
 
-    public String getGpsDestinationAddress() {
-        return gpsDestinationAddress;
-    }
 
-    public void setGpsDestinationAddress(String gpsDestinationAddress) {
-        this.gpsDestinationAddress = gpsDestinationAddress;
-    }
 
     public String getCarNumber() {
         return carNumber;
@@ -95,8 +98,9 @@ public class DriverDelivery {
     long timeval;
     String customer;
     String destinationAddress;
-    String gpsDestinationAddress;
+
     String carNumber;
+    String vehicleNumber;
 
 
 

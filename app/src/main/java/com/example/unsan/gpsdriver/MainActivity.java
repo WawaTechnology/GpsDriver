@@ -105,9 +105,9 @@ public class MainActivity extends AppCompatActivity  {
 
         int permissionCheck = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        int permissionGpsCheck=ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
+        //int permissionGpsCheck=ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
         // Log.d("checkpermission"," "+permissionCheck);
-        if(permissionCheck==-1||permissionGpsCheck==-1)
+        if(permissionCheck==-1)
         {
             requestPermission();
         }
@@ -268,15 +268,13 @@ public class MainActivity extends AppCompatActivity  {
     }
     private void requestPermission(){
 
-        if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)||
-                ActivityCompat.shouldShowRequestPermissionRationale
-                        (MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)){
+        if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)){
 
 
 
         } else {
 
-            ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION},PERMISSION_REQUEST_CODE);
+            ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},PERMISSION_REQUEST_CODE);
         }
     }
 

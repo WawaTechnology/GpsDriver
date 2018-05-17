@@ -5,29 +5,33 @@ package com.example.unsan.gpsdriver;
  */
 
 public class CustomerEngChinese  {
+    String chinese;
+    Object english;
+
     public CustomerEngChinese() {
     }
 
-    String RestChinese,RestEnglish;
 
-    public String getRestChinese() {
-        return RestChinese;
+
+    public String getChinese() {
+        return chinese;
     }
 
-    public CustomerEngChinese(String restChinese, String restEnglish) {
-        RestChinese = restChinese;
-        RestEnglish = restEnglish;
+    public CustomerEngChinese(String chinese, Object english) {
+        this.chinese = chinese;
+        this.english = english;
     }
 
-    public void setRestChinese(String restChinese) {
-        RestChinese = restChinese;
+    public void setChinese(String chinese) {
+        this.chinese = chinese;
+
     }
 
-    public String getRestEnglish() {
-        return RestEnglish;
+    public Object getEnglish() {
+        return english;
     }
 
-    public void setRestEnglish(String restEnglish) {
-        RestEnglish = restEnglish;
+    public void setEnglish(Object english) {
+        this.english = english;
     }
 }

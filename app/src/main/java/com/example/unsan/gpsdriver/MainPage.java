@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -52,6 +53,11 @@ public class MainPage extends AppCompatActivity implements AdapterView.OnItemSel
     DatabaseReference driverCarDetails;
 ValueEventListener valueEventListener,dvEventListner;
 
+    int index=0;
+
+
+
+
 
 
     List<CustomerEngChinese> customerList;
@@ -71,6 +77,10 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
     ArrayAdapter<String> arrayAdapter,vehicleadapter;
+    public static final String STATE_POSITION="LIST_POSITION";
+
+    private int currentPosition;
+
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -106,8 +116,9 @@ ValueEventListener valueEventListener,dvEventListner;
         customerList=new ArrayList<>();
         listView=(ListView) findViewById(R.id.list_view);
 
-        customerReference=fbd.getReference("CarsDb");
-        customerReference.keepSynced(true);
+       // customerReference=fbd.getReference("CarsDb");
+        customerReference=fbd.getReference("carsRecord");
+
         //carNumbers=new ArrayList<>();
         //ADD vehicle number
        // addVehicleNumbers();
@@ -152,10 +163,24 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
         customAdapter=new CustomAdapter(MainPage.this,R.layout.simple_display,customerList);
-
         listView.setAdapter(customAdapter);
-        customAdapter.notifyDataSetChanged();
+        if (savedInstanceState != null) {
+            Log.d("tag","saved");
+            // Restore value of members from saved state and populare your RecyclerView again
+           int pos= savedInstanceState.getInt(STATE_POSITION);
+            listView.setSelection(pos);
+
+        }
+
+
+
+
+
+
         pgbar.setVisibility(View.VISIBLE);
+        getCustomerData();
+
+
 
 
 
@@ -177,9 +202,11 @@ ValueEventListener valueEventListener,dvEventListner;
     }
     */
 
+
     public void onStart()
     {
         super.onStart();
+        Log.d("tag","onstart");
 
 
 
@@ -294,32 +321,49 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
 
+
+
+
     public void onResume()
     {
         super.onResume();
-        getCustomerData();
         Log.d("tag","onresume");
+
+
+
+
+
+
+
 
     }
 
     private void getCustomerData() {
         Log.d("chksee","we are here");
+        customerList.clear();
+        Log.d("checkcarN",carNumber);
+        customAdapter.notifyDataSetChanged();
 
 
-       valueEventListener= customerReference.child(carNumber).child("Restaurants").addValueEventListener(new ValueEventListener() {
-            @Override
+      // valueEventListener= customerReference.child(carNumber).child("Restaurants").addValueEventListener(new ValueEventListener() {
+        valueEventListener=customerReference.child(carNumber).addValueEventListener(new ValueEventListener() {
+           @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Log.d("checkk","here");
-                customerList.clear();
+               // customerList.clear();
                 if(dataSnapshot.hasChildren()) {
 
 
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                        String key = ds.getKey();
-                        Log.d("checkkey", key);
-                        Object valueobj=ds.getValue(Object.class);
-                        String value=valueobj.toString();
-                        CustomerEngChinese customerEngChinese=new CustomerEngChinese(key,value);
+                        Log.d("ckk",ds.getKey());
+
+
+                            CustomerEngChinese customerEngChinese= ds.getValue(CustomerEngChinese.class);
+                            Log.d("chinesename",customerEngChinese.chinese+"");
+
+
+
+
                         customerList.add(customerEngChinese);
 
                         customAdapter.notifyDataSetChanged();
@@ -329,7 +373,7 @@ ValueEventListener valueEventListener,dvEventListner;
                 }
                 else
                 {
-                    Toast.makeText(MainPage.this,"No records found!",Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainPage.this,getString(R.string.no_result),Toast.LENGTH_LONG).show();
                     pgbar.setVisibility(GONE);
                     customAdapter.notifyDataSetChanged();
                 }
@@ -351,6 +395,13 @@ ValueEventListener valueEventListener,dvEventListner;
     {
         super.onPause();
         Log.d("tag","pasue");
+       currentPosition = listView.getFirstVisiblePosition();
+
+
+
+
+
+
     }
     public void onStop()
     {
@@ -364,6 +415,17 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
     }
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+// Save the user's current game state
+       // savedInstanceState.putInt(STATE_POSITION, );
+
+        Log.d("tag","savedInstanceState");
+        savedInstanceState.putInt(STATE_POSITION,currentPosition);
+        super.onSaveInstanceState(savedInstanceState);
+
+// Always call the superclass so it can save the view hierarchy state
+         }
     @Override
     public void onBackPressed() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -381,6 +443,7 @@ ValueEventListener valueEventListener,dvEventListner;
     public void onDestroy()
     {
         super.onDestroy();
+        Log.d("tag","destroy");
 
     }
 

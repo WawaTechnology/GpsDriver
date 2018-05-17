@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="Vehicle Number: "/>
+            android:text="@string/vehicle_number"/>
         <Spinner
 
             android:layout_width="wrap_content"
@@ -47,7 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="Car: "/>
+            android:text="@string/prompt_carN"/>
         <Spinner
 
             android:layout_width="wrap_content"

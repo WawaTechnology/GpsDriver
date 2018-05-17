@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_margin="16dp"
+
     android:layout_height="match_parent">
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Customer Details"
+        android:text="@string/customer_detail"
         android:textSize="22sp"
         android:layout_gravity="center"
 
@@ -20,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Restaurant Name: "/>
+            android:text="@string/restaurant_name"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -38,7 +42,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Name: "/>
+            android:text="@string/name"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -54,7 +58,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phone: "/>
+            android:text="@string/phone"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -70,7 +74,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Address: "/>
+            android:text="@string/address"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -86,7 +90,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Zip: "/>
+            android:text="@string/zip"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -99,7 +103,7 @@
         android:layout_margin="8dp"
         android:id="@+id/imgv"
         android:background="@drawable/image_border"
-        android:layout_height="250dp" />
+        android:layout_height="200dp" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -116,7 +120,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Submit"
+            android:text="@string/submit"
             android:id="@+id/submit"
             android:layout_marginLeft="50dp"
             />
@@ -126,3 +130,4 @@
 
 
 </LinearLayout>
+</ScrollView>

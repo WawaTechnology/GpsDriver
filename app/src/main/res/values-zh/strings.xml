@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="finish">完成</string>
+    <string name="show_deliveries">查看已配送客户</string>
+    <string name="images_tosent">待上传照片</string>
+    <string name="submit">上传照片</string>
+    <string name="no_photos">没有需要上传的照片</string>
+    <string name="status">状态 </string>
+    <string name="logout">退出登录 </string>
+    <string name="vehicle_number">车牌号码 </string>
+    <string name="no_order">未下单 </string>
+    <string name="delivered">已送达 </string>
+    <string name="waiting">待配送 </string>
+    <string name="customer_detail">客户信息 </string>
+    <string name="restaurant_name">餐厅名称: </string>
+    <string name="name">联系人: </string>
+    <string name="phone">电话: </string>
+    <string name="address">地址: </string>
+    <string name="zip">邮编: </string>
+    <string name="search">搜索</string>
+    <string name="app_name">GpsDriver</string>
+    <string name="no_result">没有搜索结果</string>
+    <string name="prompt_carN">车次</string>
+    <string name="prompt_carInfo">车辆信息</string>
+
+     
+    <string name="prompt_email"> 邮箱 </string>
+        
+    <string name="prompt_password"> 密码 </string>
+    <string name="action_sign_in_short"> 注册 </string>
+    <string-array name="carArray">
+        <item>Car 1</item>
+        <item>Car 2</item>
+        <item>Car 3</item>
+        <item>Car 4</item>
+        <item>Car 5</item>
+        <item>Car 6</item>
+        <item>Car 7</item>
+        <item>Car 8</item>
+        <item>Car 9</item>
+        <item>Car 10</item>
+        <item>Car 11</item>
+        <item>Car 12</item>
+        <item>Car 13</item>
+        <item>Car 14</item>
+        <item>Car 15</item>
+        <item>Car 16</item>
+        <item>Car 17</item>
+        <item>Car 18</item>
+        <item>Car 19</item>
+        <item>Car 20</item>
+    </string-array>
+    <string-array name="vehicleNames">
+        <item>YP2095H</item>
+        <item>GBF6032M</item>
+        <item>GBD498C</item>
+        <item>GBD5898Z</item>
+        <item>GBG9001C</item>
+        <item>GBG3898X</item>
+        <item>GBC7432B</item>
+        <item>GBG7570P</item>
+    </string-array>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</resources>

@@ -24,12 +24,12 @@
         />
   <item
         android:id="@+id/show_deliveries"
-        android:title="Show Deliveries"
+        android:title="@string/show_deliveries"
       android:orderInCategory="100"
       app:showAsAction="ifRoom|withText"></item>
     <item
         android:id="@+id/logout"
-        android:title="logout"
+        android:title="@string/logout"
         android:text="logout"
         android:orderInCategory="100"
         app:showAsAction="ifRoom|withText"></item>

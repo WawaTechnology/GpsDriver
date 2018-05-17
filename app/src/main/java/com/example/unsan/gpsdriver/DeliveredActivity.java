@@ -30,6 +30,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,7 +51,10 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -72,15 +76,16 @@ public class DeliveredActivity extends AppCompatActivity {
     FirebaseDatabase fbd;
     ProgressDialog progressDialog;
     TextView name, phone, addressTextView, restName, zipText;
-    DatabaseReference customerDeliveredReference,customerReference;
+    DatabaseReference customerDeliveredReference;
 
     private CustomerSqlite customerSqlite;
 
 
     DatabaseReference destinationReference;
 
-    String strLat, strLng;
+
     String carNumber;
+
 
     String startAddress;
     NetworkInfo networkInfo;
@@ -95,18 +100,26 @@ public class DeliveredActivity extends AppCompatActivity {
 
     double longitude, latitude;
     String address;
-    double lat, lng;
+
     String startTime;
     Uri downloadUrl;
     String node;
     String driverName;
     String customerchinese;
+    String vehicleNum;
+    SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd-MM-yyyy");
+    SimpleDateFormat simpleDateFormat1=new SimpleDateFormat("HH a");
+    Date todayDate = new Date();
+    String thisDate ;
+    String hour;
+    List<String> hourList;
+    String hh1;
 
     SharedPreferences sharedPreferences;
 
     private String gpsDestAddress;
     File photoFile;
-    FusedLocationProviderClient mFusedLocationProviderClient;
+   // FusedLocationProviderClient mFusedLocationProviderClient;
     private BroadcastReceiver br = new BroadcastReceiver() {
 
         @Override
@@ -136,6 +149,7 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
 
+
         takeButton = (ImageButton) findViewById(R.id.imgbut);
 
 
@@ -154,6 +168,8 @@ public class DeliveredActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences("location_driver", Context.MODE_PRIVATE);
         driverName = sharedPreferences.getString("dname", null);
         carNumber = sharedPreferences.getString("carNumber", null);
+        vehicleNum=sharedPreferences.getString("vehicleNumber",null);
+
 
 
         fbd = FirebaseDatabase.getInstance();
@@ -162,24 +178,51 @@ public class DeliveredActivity extends AppCompatActivity {
         destinationReference = fbd.getReference("DriverDelivery");
         driverDayDelivery=fbd.getReference("driverDayRecord");
         customerDeliveredReference=fbd.getReference("CustomerTodayRecord");
-        customerReference=fbd.getReference("Customer");
+      //  customerReference=fbd.getReference("Customer");
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 
         registerReceiver(br, intentFilter);
 
+
         // globalProvider=GlobalProvider.getGlobalInstance(DeliveredActivity.this);
 
 
         Intent intent = getIntent();
-         customerchinese=intent.getStringExtra("customernd");
-         Log.d("checkcustomer",customerchinese);
-        getCustomerData(customerchinese);
+         customer= (Customer) intent.getSerializableExtra("customernd");
+        customerchinese =intent.getStringExtra("restName");
+        if(customer!=null) {
+            name.setText(customer.getContactPerson() + "");
+            phone.setText(customer.getContactNumber() + "");
+            addressTextView.setText(customer.getAddress());
+
+            restName.setText(customerchinese);
+            zipText.setText(customer.getZip() + "");
+        }
+        else
+        {
+            Toast.makeText(DeliveredActivity.this,"Please press back button and try again!",Toast.LENGTH_LONG).show();
+        }
+        hour=simpleDateFormat1.format(todayDate);
+        hh1=hour.substring(3);
+        thisDate=simpleDateFormat.format(todayDate);
+
+
+        hourList=new ArrayList<>();
+        hourList.add("00 am");
+        hourList.add("01 am");
+        hourList.add("02 am");
+        hourList.add("03 am");
+        hourList.add("04 am");
+        hourList.add("05 am");
+
 
 
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        //Commenting code for gpslocation
+        /*
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -189,23 +232,29 @@ public class DeliveredActivity extends AppCompatActivity {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+            gpsDestAddress="GPS Problem";
+
             return;
         }
-
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        //TODO implement this functionality on Button's click
-
-        mFusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                Log.d("loclistener", "called");
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                convertAddress();
+        else {
 
 
-            }
-        });
+            mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+            //TODO implement this functionality on Button's click
+
+            mFusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    Log.d("loclistener", "called");
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                    convertAddress();
+
+
+                }
+            });
+        }
+        */
 
 
         // customer=globalProvider.getCustomer();
@@ -221,10 +270,8 @@ public class DeliveredActivity extends AppCompatActivity {
         // String car=customer.carNumber.trim();
 
 
-        strLat = String.valueOf(lat);
-        Log.v("lat:", strLat);
-        strLng = String.valueOf(lng);
-        Log.v("lng:", strLng);
+
+
 
 
         takeButton.setOnClickListener(new View.OnClickListener() {
@@ -280,15 +327,15 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
                     long date = System.currentTimeMillis();
-                    SimpleDateFormat sd = new SimpleDateFormat("HH:mm");
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                    dateString = sdf.format(date);
+                    SimpleDateFormat sdt = new SimpleDateFormat("HH:mm");
 
-                    String desttime = sd.format(date);
+                    dateString = simpleDateFormat.format(date);
+
+                    String desttime = sdt.format(date);
                     long tm = -1 * new Date().getTime();
 
                     // Delivery delivery = new Delivery(tm,startTime, desttime, dateString, downloadUrl.toString(), customerN.getRestaurantName(), customer.Address, startAddress, carNumber, "name1", gpsDestAddress);
-                    DriverDelivery deliveryDriver = new DriverDelivery(desttime, dateString, tm, customerchinese, customer.address, gpsDestAddress, carNumber, driverName);
+                    DriverDelivery deliveryDriver = new DriverDelivery(desttime, dateString, tm, customerchinese, customer.address, carNumber,vehicleNum, driverName);
                     node = destinationReference.push().getKey();
                     destinationReference.child(node).setValue(deliveryDriver);
                     customerSqlite.insertContact(node, capturedImageUri.toString());
@@ -298,16 +345,32 @@ public class DeliveredActivity extends AppCompatActivity {
                     String urladd = cursor.getString(1);
                     Log.d("urlsaved", urladd);
                     customerSqlite.close();
-                    SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd-MM-yyyy");
-                    Date todayDate = new Date();
-                    String thisDate = simpleDateFormat.format(todayDate);
-                    driverDayDelivery.child(thisDate).child(node).setValue("delivered");
-                    customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue("delivered");
+
+                        if(hourList.contains(hour))
+                        {
+                            thisDate=getYesterdayDateString();
+                            driverDayDelivery.child(thisDate).child(node).setValue("delivered");
+                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(node );
+                            Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
+                            startActivity(intet);
+
+                        }
+                        else {
+
+
+                            driverDayDelivery.child(thisDate).child(node).setValue("delivered");
+                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(node );
+                            Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
+                            startActivity(intet);
+                        }
 
 
 
-                    Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
-                    startActivity(intet);
+
+
+
+
+
                 }
                 }
 
@@ -320,6 +383,16 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
     }
+    private String getYesterdayDateString() {
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        return dateFormat.format(yesterday());
+    }
+    private Date yesterday() {
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        return cal.getTime();
+    }
+    /*
 
     private void getCustomerData(final String customerchinese) {
         Log.d("checkchinesesize",customerchinese.length()+"");
@@ -333,6 +406,7 @@ public class DeliveredActivity extends AppCompatActivity {
                 if(customer==null)
                 {
                     Log.d("nullcustomer","null");
+
                 }
                 else {
                     name.setText(customer.getContactPerson() + "");
@@ -341,6 +415,8 @@ public class DeliveredActivity extends AppCompatActivity {
 
                     restName.setText(customerchinese);
                     zipText.setText(customer.getZip() + "");
+                    prgBar.setVisibility(GONE);
+
                 }
 
             }
@@ -353,6 +429,9 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
     }
+    */
+    //comment convertDDRESS
+    /*
 
     private void convertAddress() {
         Geocoder geocoder = new Geocoder(DeliveredActivity.this, Locale.getDefault());
@@ -361,21 +440,14 @@ public class DeliveredActivity extends AppCompatActivity {
 
             gpsDestAddress = addressList.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
             String city = addressList.get(0).getLocality();
-           /* List<Address> addresses = geocoder.getFromLocationName(customer.address, 1);
-            if ((addresses != null) && (addresses.size() > 0)) {
-                Address fetchedAddress = addresses.get(0);
-                lat = fetchedAddress.getLatitude();
-                lng = fetchedAddress.getLongitude();
-                Log.v("try-if", "ok great work");
-            } else {
-                Log.v("try-else", "something wrong");
-            }
-            */
+
         } catch (IOException e) {
             e.printStackTrace();
             Log.v("catch", "Could not get address....!");
         }
     }
+    */
+
 
 
     public void onActivityResult(int requestcode, int resultcode, Intent data) {

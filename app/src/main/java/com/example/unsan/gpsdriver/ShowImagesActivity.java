@@ -57,6 +57,7 @@ public class ShowImagesActivity extends AppCompatActivity  {
     ValueEventListener valueEventListener;
     Button submitStatus;
     boolean connected;
+   // Button deleteImgs;
 
 
 
@@ -67,6 +68,7 @@ public class ShowImagesActivity extends AppCompatActivity  {
     rcv=(RecyclerView)findViewById(R.id.list_images);
     submitimgs=(Button)findViewById(R.id.submit_imgs);
     submitStatus=(Button) findViewById(R.id.status);
+  //  deleteImgs=(Button)findViewById(R.id.delete_imgs);
     customerSqlite=new CustomerSqlite(ShowImagesActivity.this);
     imgList=new ArrayList<>();
     imgKey=new ArrayList<>();
@@ -88,6 +90,8 @@ public class ShowImagesActivity extends AppCompatActivity  {
     Cursor cursor=customerSqlite.getData();
     int size=customerSqlite.numberOfRows();
     Log.d("ss",size+"");
+
+
     if (cursor.moveToFirst()) {
 
         do {
@@ -104,6 +108,27 @@ public class ShowImagesActivity extends AppCompatActivity  {
             Log.d("getval",val);
         } while (cursor.moveToNext());
     }
+   /* deleteImgs.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Cursor cursor1=customerSqlite.getData();
+            if(cursor1.moveToFirst())
+            {
+                do {
+                    String k=cursor1.getString(0);
+                    customerSqlite.deleteDelivery(k);
+
+
+
+
+                    }while(cursor1.moveToNext());
+                }
+                cursor1.close();
+            }
+        });
+        */
+
+
     uri=new Uri[imgList.size()];
     submitStatus.setOnClickListener(new View.OnClickListener() {
         @Override

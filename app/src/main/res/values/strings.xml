@@ -10,6 +10,25 @@
     <string name="no_result">No Result Found</string>
     <string name="prompt_carN">Car Number</string>
     <string name="prompt_carInfo">Car Info</string>
+    <string name="finish">Finish</string>
+    <string name="show_deliveries">Show Deliveries</string>
+    <string name="images_tosent">Images to be sent </string>
+    <string name="submit">Submit</string>
+    <string name="no_photos">No Photos</string>
+    <string name="status">Status </string>
+    <string name="logout">Logout </string>
+    <string name="vehicle_number">Vehicle Number </string>
+    <string name="no_order">No Order</string>
+    <string name="delivered">delivered </string>
+    <string name="waiting">waiting </string>
+    <string name="customer_detail">Customer Detail </string>
+    <string name="restaurant_name">Restaurant Name: </string>
+    <string name="name">Name: </string>
+    <string name="phone">Phone: </string>
+    <string name="address">Address: </string>
+    <string name="zip">Zip: </string>
+
+
     <string-array name="carArray">
         <item>Car 1</item>
         <item>Car 2</item>
