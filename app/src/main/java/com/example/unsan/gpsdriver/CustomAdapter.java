@@ -2,6 +2,7 @@ package com.example.unsan.gpsdriver;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -41,6 +42,7 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
     List<String> hourList;
     String hour;
     String hh1;
+    String carNumber;
 
     public CustomAdapter(@NonNull Context context, int resource, @NonNull List<CustomerEngChinese> objects) {
         super(context, resource, objects);
@@ -52,6 +54,8 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
         customerReference = fbd.getReference("Customer");
         hour=simpleDateFormat1.format(todayDate);
         hh1=hour.substring(3);
+        SharedPreferences sharedPreferences=context.getSharedPreferences("location_driver", Context.MODE_PRIVATE);
+        carNumber=sharedPreferences.getString("carNumber","Car 1");
 
 
         hourList=new ArrayList<>();
@@ -96,7 +100,10 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
                 }
 
 
-            customerTodayReference.child(thisDate).child(((MainPage) context).carNumber).child(customer.getChinese()).addValueEventListener(new ValueEventListener() {
+
+
+
+            customerTodayReference.child(thisDate).child(carNumber).child(customer.getChinese()).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     if (dataSnapshot.exists()) {

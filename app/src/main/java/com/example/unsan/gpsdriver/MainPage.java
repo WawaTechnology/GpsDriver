@@ -32,7 +32,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +58,8 @@ public class MainPage extends AppCompatActivity implements AdapterView.OnItemSel
 ValueEventListener valueEventListener,dvEventListner;
 
     int index=0;
+    boolean sortPressed;
+
 
 
 
@@ -80,6 +86,7 @@ ValueEventListener valueEventListener,dvEventListner;
     public static final String STATE_POSITION="LIST_POSITION";
 
     private int currentPosition;
+    private DatabaseReference customerTodayReference;
 
     public void onCreate(Bundle savedInstanceState)
     {
@@ -90,10 +97,12 @@ ValueEventListener valueEventListener,dvEventListner;
         spinner=(Spinner) findViewById(R.id.sp1);
         spinner2=(Spinner) findViewById(R.id.sp2);
        // vehicleNumbers=new ArrayList<>();
-        driverCarDetails=FirebaseDatabase.getInstance().getReference("driverCarDb");
-
         FirebaseDatabase fbd=FirebaseDatabase.getInstance();
+        driverCarDetails=fbd.getReference("driverCarDb");
+
+
         driverDataRef=fbd.getReference("Driver");
+        //customerTodayReference = fbd.getReference("CustomerTodayRecord");
 
 
 
@@ -276,6 +285,11 @@ ValueEventListener valueEventListener,dvEventListner;
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
+            case R.id.sort:
+            {
+               sortPressed=true;
+               //sortDeliveryOrder();
+            }
             case R.id.refresh:
             {
                 getCustomerData();
@@ -317,8 +331,60 @@ ValueEventListener valueEventListener,dvEventListner;
         }
         return super.onOptionsItemSelected(item);
     }
+/*
+    private void sortDeliveryOrder() {
+        if(hourList.contains(hour))
+        {
+            thisDate=getYesterdayDateString();
+        }
+        customerTodayReference.child(thisDate).child(carNumber).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                customerList.clear();
+                for(DataSnapshot ds:dataSnapshot.getChildren())
+                {
+                    if(ds.getValue(String.class).equals("Ordered"))
+                    {
+                       final String key=ds.getKey();
+                        customerReference.orderByChild("chinese").addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                               CustomerEngChinese cs=dataSnapshot.getValue(CustomerEngChinese.class);
+                               if(cs.getChinese().equals(key))
+                               {
+                                   customerList.add(cs);
+                                   customAdapter.notifyDataSetChanged();
+                               }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+                    }
+                }
 
 
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+    private String getYesterdayDateString() {
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        return dateFormat.format(yesterday());
+    }
+    private Date yesterday() {
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        return cal.getTime();
+    }
+    */
 
 
 

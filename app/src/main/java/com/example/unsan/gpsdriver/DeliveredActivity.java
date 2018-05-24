@@ -350,7 +350,7 @@ public class DeliveredActivity extends AppCompatActivity {
                         {
                             thisDate=getYesterdayDateString();
                             driverDayDelivery.child(thisDate).child(node).setValue("delivered");
-                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(node );
+                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(desttime);
                             Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
                             startActivity(intet);
 
@@ -359,7 +359,7 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
                             driverDayDelivery.child(thisDate).child(node).setValue("delivered");
-                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(node );
+                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(desttime );
                             Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
                             startActivity(intet);
                         }
