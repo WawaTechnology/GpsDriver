@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GpsDriver</string>
+    <string name="app_name">Driver</string>
 
      
     <string name="prompt_email"> Email </string>

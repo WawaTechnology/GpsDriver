@@ -32,8 +32,8 @@ public class SearchResultsActivity extends AppCompatActivity {
     ListView lvw;
     TextView tvw;
 
-    List<CustomerEngChinese> list;
-    ArrayAdapter<CustomerEngChinese> listAdapter;
+    List<CustomerOrder> list;
+    ArrayAdapter<CustomerOrder> listAdapter;
     SharedPreferences sharedPreferences;
     DatabaseReference restaurantReference;
     String cNumber;
@@ -50,7 +50,7 @@ public class SearchResultsActivity extends AppCompatActivity {
         String vNumber=sharedPreferences.getString("vehicleNumber",null);
       getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         restaurantReference= FirebaseDatabase.getInstance().getReference("CarsDb");
-        listAdapter = new CustomAdapter(this, R.layout.searchtext, list);
+        listAdapter = new CustomAdapter(this, R.layout.searchtext,list);
         lvw.setAdapter(listAdapter);
 
 
@@ -87,8 +87,10 @@ public class SearchResultsActivity extends AppCompatActivity {
 
 
                                 CustomerEngChinese customerEngChinese=new CustomerEngChinese(key,value);
-                                list.add(customerEngChinese);
-                                ;
+                                //todo solve
+                               OrderStatus order=new OrderStatus(customerEngChinese.getEnglish().toString(),"unknown",1);
+                                list.add(new CustomerOrder(customerEngChinese.getChinese(),order));
+
                                 listAdapter.notifyDataSetChanged();
                                 tvw.setVisibility(View.GONE);
                             }

@@ -4,7 +4,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -32,6 +35,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.ByteArrayOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -42,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 import static android.view.View.GONE;
+
 
 /**
  * Created by Unsan on 12/4/18.
@@ -57,8 +62,13 @@ public class MainPage extends AppCompatActivity implements AdapterView.OnItemSel
     DatabaseReference driverCarDetails;
 ValueEventListener valueEventListener,dvEventListner;
 
+
     int index=0;
     boolean sortPressed;
+    String thisDate;
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    Date todayDate = new Date();
+    SimpleDateFormat simpleDateFormat1=new SimpleDateFormat("HH a");
 
 
 
@@ -66,7 +76,7 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
 
-    List<CustomerEngChinese> customerList;
+    List<CustomerOrder> customerList;
 
     CustomAdapter customAdapter;
     ProgressBar pgbar;
@@ -77,6 +87,10 @@ ValueEventListener valueEventListener,dvEventListner;
    // List<String> carNumbers;
    // List<String> vehicleNumbers;
     String vehicleNumber;
+    List<String> hourList;
+    String hour;
+    String deliveredCustomerName;
+
 
 
 
@@ -85,7 +99,7 @@ ValueEventListener valueEventListener,dvEventListner;
     ArrayAdapter<String> arrayAdapter,vehicleadapter;
     public static final String STATE_POSITION="LIST_POSITION";
 
-    private int currentPosition;
+   // private int currentPosition;
     private DatabaseReference customerTodayReference;
 
     public void onCreate(Bundle savedInstanceState)
@@ -101,8 +115,9 @@ ValueEventListener valueEventListener,dvEventListner;
         driverCarDetails=fbd.getReference("driverCarDb");
 
 
+
         driverDataRef=fbd.getReference("Driver");
-        //customerTodayReference = fbd.getReference("CustomerTodayRecord");
+        customerTodayReference = fbd.getReference("CustomerTodayRecord");
 
 
 
@@ -127,6 +142,14 @@ ValueEventListener valueEventListener,dvEventListner;
 
        // customerReference=fbd.getReference("CarsDb");
         customerReference=fbd.getReference("carsRecord");
+        hourList=new ArrayList<>();
+        hourList.add("00 am");
+        hourList.add("01 am");
+        hourList.add("02 am");
+        hourList.add("03 am");
+        hourList.add("04 am");
+        hourList.add("05 am");
+
 
         //carNumbers=new ArrayList<>();
         //ADD vehicle number
@@ -173,13 +196,14 @@ ValueEventListener valueEventListener,dvEventListner;
 
         customAdapter=new CustomAdapter(MainPage.this,R.layout.simple_display,customerList);
         listView.setAdapter(customAdapter);
-        if (savedInstanceState != null) {
+       /* if (savedInstanceState != null) {
             Log.d("tag","saved");
             // Restore value of members from saved state and populare your RecyclerView again
            int pos= savedInstanceState.getInt(STATE_POSITION);
             listView.setSelection(pos);
 
         }
+        */
 
 
 
@@ -187,7 +211,11 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
         pgbar.setVisibility(View.VISIBLE);
-        getCustomerData();
+        Intent intent=getIntent();
+        deliveredCustomerName=intent.getStringExtra("customerchinese");
+        //getCustomerData();
+        //sortDeliveryOrder();
+
 
 
 
@@ -285,14 +313,11 @@ ValueEventListener valueEventListener,dvEventListner;
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
-            case R.id.sort:
-            {
-               sortPressed=true;
-               //sortDeliveryOrder();
-            }
+
             case R.id.refresh:
             {
-                getCustomerData();
+               // getCustomerData();
+                sortDeliveryOrder();
                 break;
             }
             case R.id.searchid: {
@@ -331,42 +356,49 @@ ValueEventListener valueEventListener,dvEventListner;
         }
         return super.onOptionsItemSelected(item);
     }
-/*
+
     private void sortDeliveryOrder() {
+        hour=simpleDateFormat1.format(todayDate);
+
+        customerList.clear();
+        customAdapter.notifyDataSetChanged();
+
+
         if(hourList.contains(hour))
         {
             thisDate=getYesterdayDateString();
         }
-        customerTodayReference.child(thisDate).child(carNumber).addValueEventListener(new ValueEventListener() {
+        else
+            thisDate = simpleDateFormat.format(todayDate);
+
+        Log.d("custsize",customerList.size()+"");
+        customerTodayReference.child(thisDate).child(carNumber).orderByChild("order").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                customerList.clear();
-                for(DataSnapshot ds:dataSnapshot.getChildren())
-                {
-                    if(ds.getValue(String.class).equals("Ordered"))
-                    {
-                       final String key=ds.getKey();
-                        customerReference.orderByChild("chinese").addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                               CustomerEngChinese cs=dataSnapshot.getValue(CustomerEngChinese.class);
-                               if(cs.getChinese().equals(key))
-                               {
-                                   customerList.add(cs);
-                                   customAdapter.notifyDataSetChanged();
-                               }
-                            }
+                if (dataSnapshot.hasChildren()) {
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
+                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
 
-                            }
-                        });
+                       OrderStatus orderStatus=ds.getValue(OrderStatus.class);
+                       CustomerOrder customerOrder=new CustomerOrder(ds.getKey(),orderStatus);
+                       if(orderStatus.getStatus().equals("Ordered")) {
+                           customerList.add(customerOrder);
+                       }
+
 
                     }
+                    if(customerList.size()<=0)
+                    {
+                        Toast.makeText(MainPage.this,"No Record",Toast.LENGTH_LONG).show();
+                    }
+
+                    pgbar.setVisibility(GONE);
+
+
+                    customAdapter.notifyDataSetChanged();
+
+
                 }
-
-
             }
 
             @Override
@@ -384,7 +416,7 @@ ValueEventListener valueEventListener,dvEventListner;
         cal.add(Calendar.DATE, -1);
         return cal.getTime();
     }
-    */
+
 
 
 
@@ -404,14 +436,16 @@ ValueEventListener valueEventListener,dvEventListner;
 
     }
 
+    /*
+
     private void getCustomerData() {
-        Log.d("chksee","we are here");
+
         customerList.clear();
-        Log.d("checkcarN",carNumber);
+
         customAdapter.notifyDataSetChanged();
 
 
-      // valueEventListener= customerReference.child(carNumber).child("Restaurants").addValueEventListener(new ValueEventListener() {
+
         valueEventListener=customerReference.child(carNumber).addValueEventListener(new ValueEventListener() {
            @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -430,7 +464,11 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
 
-                        customerList.add(customerEngChinese);
+
+                                customerList.add(customerEngChinese);
+
+
+
 
                         customAdapter.notifyDataSetChanged();
                     }
@@ -453,7 +491,9 @@ ValueEventListener valueEventListener,dvEventListner;
         });
 
 
+
     }
+    */
 
 
 
@@ -461,7 +501,7 @@ ValueEventListener valueEventListener,dvEventListner;
     {
         super.onPause();
         Log.d("tag","pasue");
-       currentPosition = listView.getFirstVisiblePosition();
+      // currentPosition = listView.getFirstVisiblePosition();
 
 
 
@@ -469,15 +509,14 @@ ValueEventListener valueEventListener,dvEventListner;
 
 
     }
+
+
+
     public void onStop()
     {
         super.onStop();
         Log.d("tag","stop");
-        if(valueEventListener!=null)
-            Log.d("destroy called","removing listener");
-        customerReference.removeEventListener(valueEventListener);
-        if(dvEventListner!=null)
-            driverDataRef.removeEventListener(dvEventListner);
+
 
 
     }
@@ -487,7 +526,7 @@ ValueEventListener valueEventListener,dvEventListner;
        // savedInstanceState.putInt(STATE_POSITION, );
 
         Log.d("tag","savedInstanceState");
-        savedInstanceState.putInt(STATE_POSITION,currentPosition);
+      //  savedInstanceState.putInt(STATE_POSITION,currentPosition);
         super.onSaveInstanceState(savedInstanceState);
 
 // Always call the superclass so it can save the view hierarchy state
@@ -521,7 +560,8 @@ ValueEventListener valueEventListener,dvEventListner;
                 SharedPreferences.Editor editor=sharedPreferences.edit();
                 editor.putString("carNumber", carNumber);
                 editor.commit();
-                getCustomerData();
+                sortDeliveryOrder();
+                //getCustomerData();
 
 
                 break;

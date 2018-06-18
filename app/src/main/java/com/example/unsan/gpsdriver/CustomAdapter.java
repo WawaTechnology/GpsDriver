@@ -1,16 +1,25 @@
 package com.example.unsan.gpsdriver;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -18,6 +27,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,13 +41,15 @@ import java.util.List;
  * Created by Unsan on 12/4/18.
  */
 
-class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
+class CustomAdapter extends ArrayAdapter<CustomerOrder> {
     Context context;
-    List<CustomerEngChinese> objects;
+    List<CustomerOrder> objects;
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy");
     Date todayDate = new Date();
     String thisDate;
     DatabaseReference customerTodayReference, customerReference;
+
+
     SimpleDateFormat simpleDateFormat1=new SimpleDateFormat("HH a");
     FirebaseDatabase fbd;
     Customer customerDetail;
@@ -44,8 +58,11 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
     String hh1;
     String carNumber;
 
-    public CustomAdapter(@NonNull Context context, int resource, @NonNull List<CustomerEngChinese> objects) {
-        super(context, resource, objects);
+
+
+    public CustomAdapter(@NonNull Context context, int resource, @NonNull List<CustomerOrder> objects) {
+        super(context,resource,objects);
+
         this.context = context;
         this.objects = objects;
         thisDate = simpleDateFormat.format(todayDate);
@@ -81,7 +98,7 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+    public View getView(final int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         View listV = convertView;
         if (listV == null)
             listV = LayoutInflater.from(context).inflate(R.layout.simple_display, parent, false);
@@ -89,57 +106,20 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
         TextView engtv = (TextView) listV.findViewById(R.id.customereng);
         final TextView tv1 = (TextView) listV.findViewById(R.id.delivery_status);
 
-        final CustomerEngChinese customer = objects.get(position);
 
 
-        if (customer != null) {
-
-                if(hourList.contains(hour))
-                {
-                    thisDate=getYesterdayDateString();
-                }
+        final CustomerOrder customer = objects.get(position);
+        tv.setText(customer.getCustomerChinese());
+        engtv.setText(customer.getOrderStatus().engName);
+        tv1.setText(customer.getOrderStatus().getStatus());
 
 
 
-
-
-            customerTodayReference.child(thisDate).child(carNumber).child(customer.getChinese()).addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.exists()) {
-                        Log.d("customeRec", customer.getChinese());
-                        if (dataSnapshot.getValue(String.class).equals("Ordered"))
-                            tv1.setText(context.getResources().getString(R.string.waiting));
-                        else
-                            tv1.setText(context.getResources().getString(R.string.delivered));
-                    } else {
-                        tv1.setText(context.getResources().getString(R.string.no_order));
-                    }
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-        } else {
-
-
-        }
-
-
-        if (customer != null) {
-
-            tv.setText(customer.getChinese());
-            engtv.setText(customer.getEnglish() + "");
-        } else
-            tv.setText("No customer Found");
         listV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //Intent intent=new Intent(context,CustomerDetail.class);
-                customerReference.child(customer.chinese).addListenerForSingleValueEvent(new ValueEventListener() {
+                customerReference.child(customer.getCustomerChinese()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         if (dataSnapshot.exists()) {
@@ -151,7 +131,7 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
 
                             Intent intent = new Intent(context, DeliveredActivity.class);
                             intent.putExtra("customernd", customerDetail);
-                            intent.putExtra("restName", customer.chinese);
+                            intent.putExtra("restName", customer.getCustomerChinese());
                             context.startActivity(intent);
                         }
 
@@ -169,6 +149,7 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
         });
         return listV;
     }
+
     private String getYesterdayDateString() {
         DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         return dateFormat.format(yesterday());
@@ -178,6 +159,7 @@ class CustomAdapter extends ArrayAdapter<CustomerEngChinese> {
         cal.add(Calendar.DATE, -1);
         return cal.getTime();
     }
+
 }
 
 

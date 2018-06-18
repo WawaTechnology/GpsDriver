@@ -55,7 +55,7 @@ public class ShowImagesActivity extends AppCompatActivity  {
     private Uri downloadUrl;
     Uri uri[];
     ValueEventListener valueEventListener;
-    Button submitStatus;
+    Button submitStatus,deleteImgs;
     boolean connected;
    // Button deleteImgs;
 
@@ -70,6 +70,7 @@ public class ShowImagesActivity extends AppCompatActivity  {
     submitStatus=(Button) findViewById(R.id.status);
   //  deleteImgs=(Button)findViewById(R.id.delete_imgs);
     customerSqlite=new CustomerSqlite(ShowImagesActivity.this);
+    deleteImgs=(Button)findViewById(R.id.delete_imgs);
     imgList=new ArrayList<>();
     imgKey=new ArrayList<>();
 
@@ -107,6 +108,7 @@ public class ShowImagesActivity extends AppCompatActivity  {
             Log.d("getn",key);
             Log.d("getval",val);
         } while (cursor.moveToNext());
+        cursor.close();
     }
    /* deleteImgs.setOnClickListener(new View.OnClickListener() {
         @Override
@@ -237,6 +239,42 @@ public class ShowImagesActivity extends AppCompatActivity  {
 
 
     });
+    deleteImgs.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            for (int i = 0; i < imgList.size(); i++) {
+              String img = imgList.get(i);
+                Uri uris = Uri.parse(img);
+             File file = new File(uris.getPath());
+                Log.d("checkfs",file.getAbsolutePath());
+                try
+                {
+                    if(file.exists())
+                    {
+                        boolean val= file.delete();
+                        Log.d("filedeletedstatus",val+"");
+                        imgList.remove(i);
+                        imageRecyclerAdapter.notifyDataSetChanged();
+                        customerSqlite.deleteDelivery(imgKey.get(i));
+                    }
+                    else
+                    {
+                        imgList.remove(i);
+                        imageRecyclerAdapter.notifyDataSetChanged();
+                        customerSqlite.deleteDelivery(imgKey.get(i));
+
+
+                    }
+                }
+                catch(Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+            }
+
+        }
+    });
 
 
 
@@ -331,6 +369,7 @@ public void checkFirebaseConnection()
 
 
 }
+
 public void onDestroy()
 {
     super.onDestroy();

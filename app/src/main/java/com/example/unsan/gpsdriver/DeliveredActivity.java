@@ -206,6 +206,9 @@ public class DeliveredActivity extends AppCompatActivity {
         }
         hour=simpleDateFormat1.format(todayDate);
         hh1=hour.substring(3);
+        Log.d("checkhour",hour+" "+hour.length());
+
+        Log.d("checkhh",hh1);
         thisDate=simpleDateFormat.format(todayDate);
 
 
@@ -344,14 +347,16 @@ public class DeliveredActivity extends AppCompatActivity {
                         cursor.moveToFirst();
                     String urladd = cursor.getString(1);
                     Log.d("urlsaved", urladd);
+                    cursor.close();
                     customerSqlite.close();
 
                         if(hourList.contains(hour))
                         {
                             thisDate=getYesterdayDateString();
                             driverDayDelivery.child(thisDate).child(node).setValue("delivered");
-                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(desttime);
+                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).child("status").setValue(desttime);
                             Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
+                            intet.putExtra("customerchinese",customerchinese);
                             startActivity(intet);
 
                         }
@@ -359,8 +364,10 @@ public class DeliveredActivity extends AppCompatActivity {
 
 
                             driverDayDelivery.child(thisDate).child(node).setValue("delivered");
-                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).setValue(desttime );
+                            customerDeliveredReference.child(thisDate).child(carNumber).child(customerchinese).child("status").setValue(desttime);
                             Intent intet = new Intent(DeliveredActivity.this, MainPage.class);
+                            intet.putExtra("customerchinese",customerchinese);
+
                             startActivity(intet);
                         }
 
